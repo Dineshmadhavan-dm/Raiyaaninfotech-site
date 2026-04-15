@@ -1,0 +1,1 @@
+[17-Jan-2026 11:52:17 UTC] PHP Warning:  fsockopen(): Unable to connect to smtp.office365.com:587 (Connection timed out) in /home/u2b0keantb1e/public_html/raiyaaninfotech.com/public/smtp_test.php on line 2
