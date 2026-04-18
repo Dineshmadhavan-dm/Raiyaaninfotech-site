@@ -545,48 +545,74 @@
 
 
 
-                            @if (
-                                    auth()->user()->can('inventory') ||
-                                    auth()->user()->can('inventory->invoice view') ||
-                                    auth()->user()->can('inventory->purchase view') ||
-                                    auth()->user()->can('inventory->stocks view') ||
-                                    auth()->user()->can('inventory->dailyexpenses view') ||
-                                    auth()->user()->can('inventory->report view')
-                                )
-                                <li class="nav-item mt-1">
-                                    <a class="nav-link submenu-toggle d-flex justify-content-between align-items-center"
-                                        href="javascript:void(0)" data-tooltip="Inventory">
-                                        <span1>
-                                            <i class="bi bi-boxes"></i>
-                                            <span>Inventory</span>
-                                        </span1>
-                                        <i class="bi bi-chevron-down toggle-icon"></i>
-                                    </a>
-                                    <ul class="submenu list-unstyled ps-4 collapse">
-                                        @can('inventory->invoice view')
-                                            <li><a href="" class="nav-link" data-tooltip="Invoice"><i
-                                                        class="bi bi-receipt-cutoff me-2"></i> Invoice</a></li>
-                                        @endcan
-                                        @can('inventory->purchase view')
-                                            <li><a href="" class="nav-link" data-tooltip="Purchase"><i
-                                                        class="bi bi-cart-plus me-2"></i> Purchase</a></li>
-                                        @endcan
-                                        @can('inventory->stocks view')
-                                            <li><a href="" class="nav-link" data-tooltip="Stocks"><i
-                                                        class="bi bi-box-seam me-2"></i> Stocks</a></li>
-                                        @endcan
-                                        @can('inventory->dailyexpenses view')
-                                            <li><a href="" class="nav-link" data-tooltip="Daily Expenses"><i
-                                                        class="bi bi-wallet2 me-2"></i> Daily Expenses</a></li>
-                                        @endcan
-                                        @can('inventory->report view')
-                                            <li><a href="" class="nav-link" data-tooltip="Report"><i
-                                                        class="bi bi-file-earmark-bar-graph me-2"></i> Report</a></li>
-                                        @endcan
-                                    </ul>
-                                </li>
-                            @endif
+                         @if (
+    auth()->user()->can('inventory') ||
+    auth()->user()->can('inventory->items view') ||
+    auth()->user()->can('inventory->categories view') ||
+    auth()->user()->can('inventory->assignments view') ||
+    auth()->user()->can('inventory->maintenance view') ||
+    auth()->user()->can('inventory->history view')
+)
 
+<li class="nav-item mt-1">
+
+    <a class="nav-link submenu-toggle d-flex justify-content-between align-items-center"
+       href="javascript:void(0)" data-tooltip="Inventory">
+
+        <span>
+            <i class="bi bi-boxes"></i>
+            <span>Inventory</span>
+        </span>
+
+        <i class="bi bi-chevron-down toggle-icon"></i>
+    </a>
+
+    <ul class="submenu list-unstyled ps-4 collapse">
+
+        @can('inventory->items view')
+        <li>
+            <a href="{{ route('inventory.index') }}" class="nav-link">
+                <i class="bi bi-box-seam me-2"></i> Items
+            </a>
+        </li>
+        @endcan
+
+        @can('inventory->categories view')
+        <li>
+            <a href="{{ route('inventory.categories.index') }}" class="nav-link">
+                <i class="bi bi-tags me-2"></i> Categories
+            </a>
+        </li>
+        @endcan
+
+        @can('inventory->assignments view')
+        <li>
+            <a href="{{ route('inventory.assignments.index') }}" class="nav-link">
+                <i class="bi bi-person-check me-2"></i> Assignments
+            </a>
+        </li>
+        @endcan
+
+        @can('inventory->maintenance view')
+        <li>
+            <a href="{{ route('inventory.maintenance.index') }}" class="nav-link">
+                <i class="bi bi-tools me-2"></i> Maintenance
+            </a>
+        </li>
+        @endcan
+
+        @can('inventory->history view')
+        <li>
+            <a href="{{ route('inventory.history.index') }}" class="nav-link">
+                <i class="bi bi-clock-history me-2"></i> History
+            </a>
+        </li>
+        @endcan
+
+    </ul>
+
+</li>
+@endif
 
 
 

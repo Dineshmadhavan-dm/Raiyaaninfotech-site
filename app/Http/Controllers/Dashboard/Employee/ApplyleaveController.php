@@ -15,11 +15,31 @@ use Illuminate\Support\Facades\Auth;
 
 class ApplyleaveController extends Controller
 {
-    public function empleaveindex()
-    {
-        $employee = Auth::user()->employee;
-        return view('dashboard.employee.applyleave.index', compact('employee'));
-    }
+   public function empleaveindex()
+{
+    $employee = Auth::user()->employee;
+
+    // ✅ GET LEAVE TYPES WITH BALANCE
+    $leaveTypes = Leavetype::where('delete_status', 1)
+        ->where('employee_name_id', $employee->emp_id)
+        ->get()
+        ->map(function ($leaveType) use ($employee) {
+
+            $usedDays = Leave::where('employee_id', $employee->emp_id)
+                ->where('leave_type_id', $leaveType->leavetype_id)
+                ->where('leave_status', '!=', 3)
+                ->whereBetween('leavedate_no', [$leaveType->leave_start_from, $leaveType->leave_end_to])
+                ->count();
+
+            return [
+                'name' => $leaveType->leavetype_name_text,
+                'total' => $leaveType->leave_days,
+                'remaining' => $leaveType->leave_days - $usedDays,
+            ];
+        });
+
+    return view('dashboard.employee.applyleave.index', compact('employee', 'leaveTypes'));
+}
 
     public function getLeaveTypes($employeeId)
     {

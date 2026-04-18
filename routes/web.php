@@ -84,6 +84,13 @@ Route::group(['middleware' => ['auth']], routes: function () {
             require __DIR__ . '/Dashboard/HR/Other/Qualification.php';
             require __DIR__ . '/Dashboard/HR/Other/Search.php';
 
+
+            require __DIR__ . '/Dashboard/HR/Inventory.php';
+            require __DIR__ . '/Dashboard/HR/InventoryCategory.php';
+            require __DIR__ . '/Dashboard/HR/InventoryAssignment.php';
+            require __DIR__ . '/Dashboard/HR/InventoryMaintenance.php';
+            require __DIR__ . '/Dashboard/HR/InventoryHistory.php';
+
         });
     });
 });

@@ -2855,6 +2855,7 @@ document.getElementById('assignLeaveDuration').value = '1';
     );
 
     const shiftData = shifts[employee.emp_id] && shifts[employee.emp_id][dateString];
+    const isSwapped = shiftData && shiftData.is_swaped == 1;
 
     const isHoliday = shiftData && shiftData.shift_type === 4;
     const isDayOff = shiftData && shiftData.shift_type === 3;
@@ -2903,7 +2904,7 @@ document.getElementById('assignLeaveDuration').value = '1';
         status = 'day_off';
         statusClass = 'day-off';
 
-        statusAbbr = '<i class="fas fa-calendar-week text-red" title="Day Off"></i>';
+        statusAbbr = '<i class="fas fa-calendar-week  text-secondary" title="Day Off"></i>';
         title = 'Day Off';
 
         dayOffCount++;
@@ -2956,6 +2957,17 @@ document.getElementById('assignLeaveDuration').value = '1';
         title = shiftData ? 'Mark Attendance' : 'No Shift Assigned';
     }
 
+    // 🔴 OVERRIDE ICON COLOR IF SWAPPED
+if (isSwapped && statusAbbr) {
+
+    statusAbbr = statusAbbr
+        .replace('text-success', 'text-danger')
+        .replace('text-warning', 'text-danger')
+        .replace('text-info', 'text-danger')
+        .replace('text-info-emphasis', 'text-danger')
+        .replace('text-secondary', 'text-danger');
+}
+
     attendanceBody += `
         <div class="day-cell ${statusClass}"
              data-date="${dateString}"
@@ -2963,6 +2975,7 @@ document.getElementById('assignLeaveDuration').value = '1';
              title="${title}"
              onclick="handleAttendanceCellClick(this, '${employee.emp_id}', '${dateString}', ${dayAttendance ? true : false}, event)">
             ${statusAbbr}
+
         </div>
     `;
 }

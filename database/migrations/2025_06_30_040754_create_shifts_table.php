@@ -48,6 +48,7 @@ $table->string('occasion')->nullable();
 
 
             $table->string('notes')->nullable();
+            $table->boolean('is_swaped')->default(0);
 
             $table->boolean('delete_status')->default(1);
 

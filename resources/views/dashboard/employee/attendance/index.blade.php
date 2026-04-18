@@ -944,6 +944,7 @@ const isHoliday = Object.values(shifts).some(emp =>
     );
 
     const shiftData = shifts[employee.emp_id] && shifts[employee.emp_id][dateString];
+    const isSwapped = shiftData && shiftData.is_swaped == 1;
 
     const isHoliday = shiftData && shiftData.shift_type === 4;
     const isDayOff = shiftData && shiftData.shift_type === 3;
@@ -983,7 +984,7 @@ const isHoliday = Object.values(shifts).some(emp =>
 
     } else if (isDayOff) {
 
-        statusAbbr = '<i class="fas fa-calendar-week text-red" title="Day Off"></i>';
+        statusAbbr = '<i class="fas fa-calendar-week text-secondary" title="Day Off"></i>';
         title = 'Day Off';
         statusClass = 'day-off';
         dayOffCount++;
@@ -1038,6 +1039,16 @@ const isHoliday = Object.values(shifts).some(emp =>
 
         title = shiftData ? 'Mark Attendance' : 'No Shift Assigned';
     }
+    // 🔴 OVERRIDE COLOR IF SWAPPED
+if (isSwapped && statusAbbr) {
+
+    statusAbbr = statusAbbr
+        .replace('text-success', 'text-danger')
+        .replace('text-warning', 'text-danger')
+        .replace('text-info', 'text-danger')
+        .replace('text-info-emphasis', 'text-danger')
+        .replace('text-secondary', 'text-danger');
+}
 
     attendanceBody += '<div class="day-cell ' + statusClass + '" data-date="' + dateString + '" data-has-shift="' + (shiftData ? 'true' : 'false') + '" title="' + title + '" onclick="handleAttendanceCellClick(this, \'' + employee.emp_id + '\', \'' + dateString + '\', ' + (dayAttendance ? true : false) + ', event)">';
     attendanceBody += statusAbbr;

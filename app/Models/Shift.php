@@ -27,7 +27,7 @@ class Shift extends Model
          // ✅ NEW
     'holiday_type',
     'occasion',
-
+'is_swaped',
         'delete_status'
     ];
 

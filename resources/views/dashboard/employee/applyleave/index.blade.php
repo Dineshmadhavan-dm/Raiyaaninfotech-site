@@ -12,19 +12,105 @@
                 </h4>
             </div>
 
-            <!-- Employee Info Section -->
-            <div class="row align-items-center p-3 bg-light rounded m-3">
-                <div class="col-auto">
-                    <img src="{{ auth()->user()->employee->image ? '/employee_images/' . auth()->user()->employee->image : '/images/admin_default.jpg' }}"
-                        class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+         <!-- Employee Info Section -->
+<div class="row p-3 bg-light rounded m-3">
+
+    <!-- Profile -->
+    <div class="d-flex align-items-center mb-3">
+        <div class="col-auto">
+            <img src="{{ auth()->user()->employee->image ? '/employee_images/' . auth()->user()->employee->image : '/images/admin_default.jpg' }}"
+                class="rounded-circle"
+                style="width: 60px; height: 60px; object-fit: cover;">
+        </div>
+
+        <div class="col ms-3">
+            <h5 class="mb-1 fw-bold">{{ auth()->user()->name }}</h5>
+            <p class="mb-0 text-muted">
+                {{ auth()->user()->employee->departmentid->dep_name ?? 'No Department' }}
+            </p>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Leave Balance -->
+    <div>
+        <h6 class="fw-bold mb-2">Leave Balance</h6>
+
+
+
+      @if(isset($leaveTypes) && count($leaveTypes) > 0)
+@php
+        $totalLeave = collect($leaveTypes)->sum('total');
+        $totalRemaining = collect($leaveTypes)->sum('remaining');
+    @endphp
+
+            <div class="p-2 mb-2 border rounded bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+
+    <span class="fw-semibold text-dark">
+        Yearly Leave Count
+    </span>
+
+    <small class="fw-semibold text-dark">
+        {{ $totalRemaining }} / {{ $totalLeave }}
+    </small>
+
+</div>
+
+<!-- Optional thin progress -->
+<div class="progress mb-3" style="height:4px; background:#e9ecef;">
+    <div class="progress-bar bg-primary"
+        style="width: {{ $totalLeave > 0 ? ($totalRemaining / $totalLeave) * 100 : 0 }}%">
+    </div>
+</div></div>
+
+  <div class="row g-2">
+
+    @foreach($leaveTypes as $leave)
+        <div class="col-md-4 col-sm-6">
+
+            <div class="p-2 border rounded bg-white h-100">
+
+                <!-- Title + Count -->
+                <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-semibold text-dark">{{ $leave['name'] }}</span>
+
+                    <span class="
+                        {{ $leave['remaining'] == 0 ? 'text-danger' : ($leave['remaining'] < ($leave['total']/2) ? 'text-warning' : 'text-success') }}">
+                        {{ $leave['remaining'] }}/{{ $leave['total'] }}
+                    </span>
                 </div>
-                <div class="col">
-                    <h5 class="mb-1 fw-bold">{{ auth()->user()->name }}</h5>
-                    <p class="mb-0 text-muted">
-                        {{ auth()->user()->employee->departmentid->dep_name ?? 'No Department' }}
-                    </p>
+
+                <!-- Progress -->
+                <div class="progress" style="height:4px; background:#f1f1f1;">
+                    <div class="progress-bar
+                        {{ $leave['remaining'] == 0 ? 'bg-danger' : ($leave['remaining'] < ($leave['total']/2) ? 'bg-warning' : 'bg-success') }}"
+                        style="width: {{ $leave['total'] > 0 ? ($leave['remaining'] / $leave['total']) * 100 : 0 }}%">
+                    </div>
                 </div>
+
             </div>
+
+        </div>
+    @endforeach
+
+</div>
+
+@else
+
+    <!-- ❌ NO LEAVE TYPES -->
+    <div class="text-center py-4 text-muted">
+        <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+        <p class="mb-0 fw-semibold">No leave types assigned</p>
+        <small>Please contact admin</small>
+    </div>
+
+@endif
+
+    </div>
+
+</div>
 
             <!-- Filters and Add Button -->
             <div class="row justify-content-between align-items-center px-3 pb-3">

@@ -27,7 +27,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="text-muted mb-2 fw-semibold cardtx">No of Leaves</p>
-                                <h2 class="fw-bold mb-0"></h2>
+                              <h2 class="fw-bold mb-0">{{ $leaveCount }}</h2>
                             </div>
                             <div class="bg-primary bg-opacity-10 p-3 rounded-3">
                                 <i class="bi bi-calendar-check fs-4 text-primary"></i>
@@ -47,7 +47,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="text-muted mb-2 fw-semibold cardtx">No of Holidays</p>
-                                <h2 class="fw-bold mb-0"></h2>
+                               <h2 class="fw-bold mb-0">{{ $holidayCount }}</h2>
 
                             </div>
                             <div class="bg-success bg-opacity-10 p-3 rounded-3">
@@ -68,7 +68,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="text-muted mb-2 fw-semibold cardtx">No. of Tasks</p>
-                                <h2 class="fw-bold mb-0"></h2>
+                               <h2 class="fw-bold mb-0">{{ $taskCount }}</h2>
 
                             </div>
                             <div class="bg-info bg-opacity-10 p-3 rounded-3">
@@ -89,7 +89,7 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="text-muted mb-2 fw-semibold cardtx">No of Emails</p>
-                                <h2 class="fw-bold mb-0"></h2>
+                              <h2 class="fw-bold mb-0">{{ $emailCount }}</h2>
 
                             </div>
                             <div class="bg-primary bg-opacity-10 p-3 rounded-3">

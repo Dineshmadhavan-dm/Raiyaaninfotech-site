@@ -185,8 +185,16 @@ public function create(Request $request)
                 'occasion' => $swapShift->occasion,
             ];
 
-            $currentShift->update($swapData);
-            $swapShift->update($currentData);
+            // $currentShift->update($swapData);
+            // $swapShift->update($currentData);
+
+            $currentShift->update(array_merge($swapData, [
+    'is_swaped' => 1
+]));
+
+$swapShift->update(array_merge($currentData, [
+    'is_swaped' => 1
+]));
 
             DB::commit();
 
@@ -270,7 +278,8 @@ public function create(Request $request)
             'notes' => $notes,
             'holiday_type' => $holidayType,
             'occasion' => $occasion,
-            'is_auto_dayoff' => $isSunday
+            'is_auto_dayoff' => $isSunday,
+            'is_swaped' => 0,
         ]);
 
         DB::commit();
@@ -502,8 +511,15 @@ public function update(Request $request)
                 'occasion' => $swapShift->occasion,
             ];
 
-            $currentShift->update($swapData);
-            $swapShift->update($currentData);
+            // $currentShift->update($swapData);
+            // $swapShift->update($currentData);
+            $currentShift->update(array_merge($swapData, [
+    'is_swaped' => 1
+]));
+
+$swapShift->update(array_merge($currentData, [
+    'is_swaped' => 1
+]));
 
             DB::commit();
 
@@ -575,6 +591,7 @@ public function update(Request $request)
             'notes' => $notes,
             'holiday_type' => $holidayType,
             'occasion' => $occasion,
+            'is_swaped' => 0
         ]);
 
         DB::commit();
