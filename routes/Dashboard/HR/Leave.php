@@ -34,7 +34,10 @@ Route::get('shift/check-dayoff', [ShiftController::class, 'checkDayOff']);
 // In web.php
 Route::post('leave/approve/{id}', [LeaveController::class, 'approveLeave'])->name('leave.approve');
 Route::post('leave/reject/{id}', [LeaveController::class, 'rejectLeave'])->name('leave.reject');
-
+// Add this route for marking attendance as present from absent
+Route::post('/leave/mark-present-from-absent', [LeaveController::class, 'markPresentFromAbsent'])
+    ->name('attendance.mark.present.from.absent');
+    Route::post('/leave/update-type/{id}', [LeaveController::class, 'updateLeaveType'])->name('leave.updateType');
 
 
 Route::prefix('leavetype')->group(function () {

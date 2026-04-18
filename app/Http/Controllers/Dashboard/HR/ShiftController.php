@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard\HR;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Shift;
 use App\Models\Department;
@@ -53,6 +54,17 @@ public function upcomingHolidays()
     ->whereDoesntHave('resignation')
     ->with('Departmentid')
     ->get();
+
+
+$attendance = Attendance::select('employee_id','attendancedate_no','attendance_type')->get();
+
+  $approvedLeaves = DB::table('leaves')
+        ->where('leave_status', 1)
+        ->get()
+        ->groupBy(['employee_id', function ($leave) {
+            return Carbon::parse($leave->leavedate_no)->format('Y-m-d');
+        }]);
+
         $departments = Department::where('delete_status', 1)->get()
             ->map(function ($department) {
                 $admin = User::role('Admin')
@@ -83,7 +95,9 @@ public function upcomingHolidays()
         return view('dashboard.hr.shiftplanner.index', compact(
             'employees',
             'departments',
-            'superAdminName'
+            'superAdminName',
+            'attendance',
+             'approvedLeaves'
         ));
     }
 
@@ -145,7 +159,14 @@ public function create(Request $request)
         $date = $request->date_no;
         $swapDate = $request->swap_date;
 
-        if ($swapDate) {
+        if (!empty($swapDate)) {
+
+            if ($swapDate == $date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap same date'
+                ], 422);
+            }
 
             $currentShift = Shift::where('employee_id', $request->employee_id)
                 ->where('date_no', $date)
@@ -155,20 +176,46 @@ public function create(Request $request)
                 ->where('date_no', $swapDate)
                 ->first();
 
-            if (!$currentShift) {
-                $currentShift = Shift::create([
-                    'employee_id' => $request->employee_id,
-                    'date_no' => $date,
-                ]);
+            if (!$currentShift || !$swapShift) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Shift not found for selected dates'
+                ], 422);
             }
 
-            if (!$swapShift) {
-                $swapShift = Shift::create([
-                    'employee_id' => $request->employee_id,
-                    'date_no' => $swapDate,
-                ]);
-            }
+$attendanceCurrent = DB::table('attendances')
+    ->where('employee_id', $request->employee_id)
+    ->where('attendancedate_no', $date)
+    ->first();
 
+$attendanceSwap = DB::table('attendances')
+    ->where('employee_id', $request->employee_id)
+    ->where('attendancedate_no', $swapDate)
+    ->first();
+
+$leaveCurrent = DB::table('leaves')
+    ->where('employee_id', $request->employee_id)
+    ->where('leavedate_no', $date)
+    ->where('leave_status', 1)
+    ->first();
+
+$leaveSwap = DB::table('leaves')
+    ->where('employee_id', $request->employee_id)
+    ->where('leavedate_no', $swapDate)
+    ->where('leave_status', 1)
+    ->first();
+
+if (
+    ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
+    ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
+    $leaveCurrent ||
+    $leaveSwap
+) {
+    return response()->json([
+        'success' => false,
+        'message' => 'Leave / Absent cannot be swapped'
+    ], 422);
+}
             $currentData = [
                 'shift_type' => $currentShift->shift_type,
                 'shift_from_time' => $currentShift->shift_from_time,
@@ -185,16 +232,8 @@ public function create(Request $request)
                 'occasion' => $swapShift->occasion,
             ];
 
-            // $currentShift->update($swapData);
-            // $swapShift->update($currentData);
-
-            $currentShift->update(array_merge($swapData, [
-    'is_swaped' => 1
-]));
-
-$swapShift->update(array_merge($currentData, [
-    'is_swaped' => 1
-]));
+            $currentShift->update(array_merge($swapData, ['is_swaped' => 1]));
+            $swapShift->update(array_merge($currentData, ['is_swaped' => 1]));
 
             DB::commit();
 
@@ -465,7 +504,8 @@ $shift->occasion = $holiday ? $holiday->occasion : null;
         return $admin?->id ?? User::role('Super admin')->pluck('id')->first();
     }
 
-public function update(Request $request)
+
+    public function update(Request $request)
 {
     $request->validate([
         'shift_type' => 'required',
@@ -479,22 +519,60 @@ public function update(Request $request)
 
         if (!empty($swapDate)) {
 
-            $currentShift = Shift::updateOrCreate(
-                [
-                    'employee_id' => $request->employee_id,
-                    'date_no' => $date
-                ],
-                []
-            );
+            if ($swapDate == $date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap same date'
+                ], 422);
+            }
 
-            $swapShift = Shift::updateOrCreate(
-                [
-                    'employee_id' => $request->employee_id,
-                    'date_no' => $swapDate
-                ],
-                []
-            );
+            $currentShift = Shift::where('employee_id', $request->employee_id)
+                ->where('date_no', $date)
+                ->first();
 
+            $swapShift = Shift::where('employee_id', $request->employee_id)
+                ->where('date_no', $swapDate)
+                ->first();
+
+            if (!$currentShift || !$swapShift) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Shift not found for selected dates'
+                ], 422);
+            }
+$attendanceCurrent = DB::table('attendances')
+    ->where('employee_id', $request->employee_id)
+    ->where('attendancedate_no', $date)
+    ->first();
+
+$attendanceSwap = DB::table('attendances')
+    ->where('employee_id', $request->employee_id)
+    ->where('attendancedate_no', $swapDate)
+    ->first();
+
+$leaveCurrent = DB::table('leaves')
+    ->where('employee_id', $request->employee_id)
+    ->where('leavedate_no', $date)
+    ->where('leave_status', 1)
+    ->first();
+
+$leaveSwap = DB::table('leaves')
+    ->where('employee_id', $request->employee_id)
+    ->where('leavedate_no', $swapDate)
+    ->where('leave_status', 1)
+    ->first();
+
+if (
+    ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
+    ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
+    $leaveCurrent ||
+    $leaveSwap
+) {
+    return response()->json([
+        'success' => false,
+        'message' => 'Leave / Absent cannot be swapped'
+    ], 422);
+}
             $currentData = [
                 'shift_type' => $currentShift->shift_type,
                 'shift_from_time' => $currentShift->shift_from_time,
@@ -511,15 +589,8 @@ public function update(Request $request)
                 'occasion' => $swapShift->occasion,
             ];
 
-            // $currentShift->update($swapData);
-            // $swapShift->update($currentData);
-            $currentShift->update(array_merge($swapData, [
-    'is_swaped' => 1
-]));
-
-$swapShift->update(array_merge($currentData, [
-    'is_swaped' => 1
-]));
+            $currentShift->update(array_merge($swapData, ['is_swaped' => 1]));
+            $swapShift->update(array_merge($currentData, ['is_swaped' => 1]));
 
             DB::commit();
 
@@ -610,6 +681,7 @@ $swapShift->update(array_merge($currentData, [
         ]);
     }
 }
+
     public function delete($id)
     {
         try {

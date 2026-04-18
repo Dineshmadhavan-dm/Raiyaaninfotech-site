@@ -149,35 +149,6 @@ class EmpAttendanceController extends Controller
         return response()->json($attendances);
     }
 
-    protected function createLeaveForAbsentAttendance(Attendance $attendance)
-    {
-        // Only create leave if attendance type is absent (0)
-        if ($attendance->attendance_type != 0) {
-            return;
-        }
-
-        // Check if leave already exists for this date and employee
-        $existingLeave = Leave::where('employee_id', $attendance->employee_id)
-            ->whereDate('leavedate_no', $attendance->attendancedate_no)
-            ->first();
-
-        if ($existingLeave) {
-            return;
-        }
-
-        // Create the leave record
-        Leave::create([
-            'employee_id' => $attendance->employee_id,
-            'member' => $attendance->attendance_empname,
-            'leave_type_id' => 0,
-            'select_duration' => 1,
-            'leave_status' => 2,
-            'reason_forleave' => 'Absent marked in attendance',
-            'leavedate_no' => $attendance->attendancedate_no,
-            'attend_id' => $attendance->attendance_id
-        ]);
-    }
-
     public function attend_create(Request $request)
     {
         $authUser = auth()->user();
@@ -190,7 +161,7 @@ class EmpAttendanceController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,emp_id',
             'attendancedate_no' => 'required|date',
-            'attendance_type' => 'required|in:0,1,2,3',
+            'attendance_type' => 'required|in:1,2,3',
             'clock_in' => 'required_if:attendance_type,1,2,3',
             'clock_out' => 'required_if:attendance_type,1,2,3',
             'attendance_workfrom' => 'nullable|in:0,1',
@@ -280,10 +251,7 @@ $attendanceLocation = $this->getLocationFromIp($clockInIp)
                 ]
             );
 
-            // After creating/updating the attendance
-            if ($attendanceType == 0) {
-                $this->createLeaveForAbsentAttendance($attendance);
-            }
+
 
             DB::commit();
             return response()->json([

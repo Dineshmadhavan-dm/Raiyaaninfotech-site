@@ -88,22 +88,32 @@
                                 </span>
                             </td>
 
-                            <td>{{ $a->assigned_date }}</td>
+                          <td>
+{{ $a->assigned_date ? \Carbon\Carbon::parse($a->assigned_date)->format('d-m-Y') : '-' }}
+</td>
 
                             <td class="">
 
                                 <!-- VIEW -->
-                                <button class="btn btn-sm btn-info view-btn"
-                                    data-item="{{ $a->item->item_name }}"
+                               <button class="btn btn-sm btn-info view-btn"
 
-                                    data-emp="{{ $a->employee->fullname }}"
-                                    data-status="{{ $a->status }}"
-                                    data-date="{{ $a->assigned_date }}"
-                                    data-return="{{ $a->return_date }}"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#viewModal">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+    data-item="{{ $a->item->item_name }}"
+    data-code="{{ $a->item->item_code }}"
+    data-image="{{ asset('inventory_images/'.$a->item->item_image) }}"
+
+    data-dept="{{ $a->department->dep_name }}"
+    data-emp="{{ $a->employee->fullname }}"
+
+    data-status="{{ $a->status }}"
+  data-date="{{ \Carbon\Carbon::parse($a->assigned_date)->format('d-m-Y') }}"
+data-return="{{ $a->return_date ? \Carbon\Carbon::parse($a->return_date)->format('d-m-Y') : '' }}"
+    data-remarks="{{ $a->remarks }}"
+
+    data-bs-toggle="modal"
+    data-bs-target="#billModal">
+
+    <i class="bi bi-eye"></i>
+</button>
 
                                 <!-- RETURN -->
                                 @if($a->status == 'assigned')
@@ -135,37 +145,123 @@
             </div>
         </div>
     </div>
+<div class="modal fade" id="billModal">
+<div class="modal-dialog modal-xl">
+<div class="modal-content border-0 shadow-lg rounded-4 p-4">
 
-    <!-- VIEW MODAL -->
-    <div class="modal fade" id="viewModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Assignment Invoice</h4>
+        <small class="text-muted">Inventory Tracking</small>
+    </div>
+    <span class="badge px-3 py-2" id="b_status"></span>
+</div>
 
-                <div class="modal-header">
-                    <h5>Assignment Details</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+<div class="row">
 
-                <div class="modal-body">
-                    <p><b>Item:</b> <span id="v_item"></span></p>
-                    <p><b>Employee:</b> <span id="v_emp"></span></p>
-                    <p><b>Status:</b> <span id="v_status"></span></p>
-                    <p><b>Assigned:</b> <span id="v_date"></span></p>
-                    <p><b>Returned:</b> <span id="v_return"></span></p>
-                </div>
+<!-- LEFT -->
+<div class="col-md-8">
 
+    <!-- ITEM INFO -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+        <h6 class="fw-bold text-primary mb-3">Item Details</h6>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><b>Item:</b> <span id="b_item"></span></p>
+                <p><b>Code:</b> <span id="b_code"></span></p>
+            </div>
+
+            <div class="col-md-6">
+                <p><b>Department:</b> <span id="b_dept"></span></p>
+                <p><b>Employee:</b> <span id="b_emp"></span></p>
             </div>
         </div>
     </div>
 
+    <!-- DATES -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+        <h6 class="fw-bold text-primary mb-3">Assignment Info</h6>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><b>Assigned Date:</b> <span id="b_date"></span></p>
+            </div>
+
+            <div class="col-md-6">
+                <p><b>Return Date:</b> <span id="b_return"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- REMARKS -->
+    <div class="card border-0 shadow-sm rounded-4 p-3">
+        <h6 class="fw-bold text-primary">Remarks</h6>
+        <p id="b_remarks" class="text-muted"></p>
+    </div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="col-md-4">
+
+    <!-- IMAGE -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 text-center">
+        <h6 class="fw-bold text-primary mb-2">Item Image</h6>
+        <img id="b_image" class="img-fluid rounded-3" style="max-height:200px; object-fit:cover;">
+    </div>
+
+    <!-- STATUS CARD -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-light">
+        <h6 class="fw-bold text-primary">Status</h6>
+        <h4 id="b_status_text"></h4>
+    </div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="text-end mt-4">
+    <button onclick="window.print()" class="btn btn-success">
+        🖨 Print
+    </button>
+</div>
+
+</div>
+</div>
+</div>
+
 <script>
 // VIEW
 $(document).on('click','.view-btn',function(){
-    $('#v_item').text($(this).data('item'));
-    $('#v_emp').text($(this).data('emp'));
-    $('#v_status').text($(this).data('status'));
-    $('#v_date').text($(this).data('date'));
-    $('#v_return').text($(this).data('return') || 'Not returned');
+
+    $('#b_item').text($(this).data('item'));
+    $('#b_code').text($(this).data('code'));
+    $('#b_dept').text($(this).data('dept'));
+    $('#b_emp').text($(this).data('emp'));
+
+    let status = $(this).data('status');
+
+    $('#b_status_text').text(status.toUpperCase());
+    $('#b_status').text(status);
+
+    // badge color
+    if(status === 'assigned'){
+        $('#b_status').removeClass().addClass('badge bg-warning px-3 py-2');
+    }else{
+        $('#b_status').removeClass().addClass('badge bg-success px-3 py-2');
+    }
+
+    $('#b_date').text($(this).data('date'));
+    $('#b_return').text($(this).data('return') || 'Not Returned');
+
+    $('#b_remarks').text($(this).data('remarks') || '-');
+
+    // IMAGE
+    $('#b_image').attr('src', $(this).data('image'));
+
 });
 
 $(document).on('click','.return-btn',function(){

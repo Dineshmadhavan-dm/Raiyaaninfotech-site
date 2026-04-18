@@ -5,27 +5,14 @@
         <x-message />
 
         <div class="leave-planner-container">
-            <!-- Header Section -->
             <div class="" style="background-color: #f8fafc;">
                 <h4 class=" p-2 fw-medium fs-5">
                     <i class="bi bi-calendar-x me-2"></i>Leave
                 </h4>
             </div>
             <div class="row justify-content-between px-3 pb-3">
-                <!-- Filter Section -->
                 <div class="col-auto p-3">
                     <div class="row justify-content-start">
-                        <div class="col-auto">
-                            <span class="form-label">Show Entries</span>
-                            <select id="entriesPerPage" class="form-select form-control">
-                                <option value="5" selected>5</option>
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="75">75</option>
-                                <option value="100">100</option>
-                            </select>
-                        </div>
 
                         <div class="col-auto" style="margin-top: 1.3em;">
                             <div class="dropdown">
@@ -152,30 +139,68 @@
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-            <!-- Leave Table -->
-            <div class="table-responsive p-3">
-                <h5 class="mb-3">My Leaves</h5>
-                <table class="table table-bordered table-hover">
-                    <thead class="text-center">
-                        <tr>
-                            <th>Name</th>
-                            <th>Leave Type</th>
-                            <th>Type</th>
-                            <th>Duration</th>
-                            <th>Applied Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminLeaveTableBody">
-                        <!-- Admin leave data will be populated here -->
-                    </tbody>
-                </table>
+          <div class="table-responsive p-3">
+    <h5 class="mb-3">My Leaves</h5>
+    <div class="row mb-3">
+        <div class="col-auto">
+            <span class="form-label">Show Entries</span>
+            <select id="entriesPerPageAdmin" class="form-select form-control" style="width: auto;">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="75">75</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+    <table class="table table-bordered table-hover">
+        <thead class="text-center">
+            <tr>
+                <th>Name</th>
+                <th>Leave Type</th>
+                <th>Type</th>
+                <th>Duration</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="adminLeaveTableBody">
+        </tbody>
+    </table>
+    <div class="row justify-content-between align-items-center mt-3">
+        <div class="col-auto">
+            <span id="adminShowingInfo">Showing 1 to 5 of 0 entries</span>
+        </div>
+        <div class="col-auto">
+            <div class="pagination-controls d-flex align-items-center">
+                <button class="pagination-button" id="prevAdminPage" disabled>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="page-info mx-2" id="adminPageInfo">Page 1 of 1</span>
+                <button class="pagination-button" id="nextAdminPage" disabled>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
-
-            <!-- Employee Leaves Table -->
+        </div>
+    </div>
+</div>
             <div class="table-responsive p-3 mt-4">
-                <h5 class="mb-3">Employee Leaves</h5>
+                <h5 class="mb-3">Absent Employee</h5>
+                <div class="row mb-3">
+                    <div class="col-auto">
+                        <span class="form-label">Show Entries</span>
+                        <select id="entriesPerPageAbsent" class="form-select form-control" style="width: auto;">
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="75">75</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
                 <table class="table table-bordered table-hover">
                     <thead class="text-center">
                         <tr>
@@ -188,33 +213,76 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="employeeLeaveTableBody">
-                        <!-- Employee leave data will be populated here -->
+                    <tbody id="absentEmployeeTableBody">
                     </tbody>
                 </table>
-            </div>
-
-            <!-- Pagination Controls -->
-            <div class="row justify-content-between align-items-center p-3">
-                <div class="col-auto">
-                    <span id="leaveShowingInfo">Showing 1 to 5 of 0 entries</span>
-                </div>
-                <div class="col-auto">
-                    <div class="pagination-controls d-flex align-items-center">
-                        <button class="pagination-button" id="prevLeavePage" disabled>
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                        <span class="page-info mx-2" id="leavePageInfo">Page 1 of 1</span>
-                        <button class="pagination-button" id="nextLeavePage" disabled>
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
+                <div class="row justify-content-between align-items-center mt-3">
+                    <div class="col-auto">
+                        <span id="absentShowingInfo">Showing 1 to 5 of 0 entries</span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="pagination-controls d-flex align-items-center">
+                            <button class="pagination-button" id="prevAbsentPage" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span class="page-info mx-2" id="absentPageInfo">Page 1 of 1</span>
+                            <button class="pagination-button" id="nextAbsentPage" disabled>
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+
+           <div class="table-responsive p-3 mt-4">
+    <h5 class="mb-3">Employee Leaves</h5>
+    <div class="row mb-3">
+        <div class="col-auto">
+            <span class="form-label">Show Entries</span>
+            <select id="entriesPerPageEmployee" class="form-select form-control" style="width: auto;">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="75">75</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+    <table class="table table-bordered table-hover">
+        <thead class="text-center">
+            <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>Type</th>
+                <th>Duration</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="employeeLeaveTableBody">
+        </tbody>
+    </table>
+    <div class="row justify-content-between align-items-center mt-3">
+        <div class="col-auto">
+            <span id="employeeShowingInfo">Showing 1 to 5 of 0 entries</span>
+        </div>
+        <div class="col-auto">
+            <div class="pagination-controls d-flex align-items-center">
+                <button class="pagination-button" id="prevEmployeePage" disabled>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="page-info mx-2" id="employeePageInfo">Page 1 of 1</span>
+                <button class="pagination-button" id="nextEmployeePage" disabled>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
 
-
-        <!-- Add Leave Modal -->
         <div class="modal fade" id="leaveModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg leavelen">
                 <div class="modal-content">
@@ -242,7 +310,6 @@
                                     <label for="leaveType" class="form-label">Leave Type</label>
                                     <select id="leaveType" class="form-select" name="leave_type_id" required>
                                         <option value="">Select Leave Type</option>
-                                        <!-- Leave types will be populated dynamically -->
                                     </select>
 
                                     <small id="leaveTypeInfo" class="text-danger ms-2 mt-3"
@@ -277,7 +344,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Single Date Field -->
                                 <div class="col-md-6" id="singleDateField">
                                     <label for="leaveDate" class="form-label">Date </label>
                                     <input type="date" id="leaveDate" class="form-control" name="date"
@@ -285,7 +351,6 @@
                                     <div id="holidayInfoSingle" class="mt-3 small text-success"></div>
                                 </div>
 
-                                <!-- Date Range Fields -->
                                 <div class="col-md-6 d-none" id="dateRangeFields">
                                     <label for="selectedDateRange" class="form-label">Date Range</label>
                                     <p class="" id="openDateRangePicker">
@@ -297,7 +362,6 @@
 
                                     <input type="hidden" id="date_range_from" name="date_range_from">
                                     <input type="hidden" id="date_range_to" name="date_range_to">
-                                    <!-- Date Range Picker Container (hidden by default) -->
                                     <div class="date-range-picker-container mt-2 d-none"
                                         id="dateRangePickerContainer">
                                         <span id="dateRangeDisplay" style="display: none;"></span>
@@ -377,7 +441,6 @@
             </div>
         </div>
 
-        <!-- Edit Leave Modal -->
         <div class="modal fade" id="editLeaveModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg leavelen">
                 <div class="modal-content">
@@ -402,7 +465,6 @@
                                     <label for="editLeaveType" class="form-label">Leave Type</label>
                                     <select id="editLeaveType" class="form-select" name="leave_type_id" required>
                                         <option value="">Select Leave Type</option>
-                                        <!-- Leave types will be populated dynamically -->
                                     </select>
                                     <small id="editLeaveTypeInfo" class="text-danger ms-2 mt-3"
                                         style="display:none; color:#6c757d; font-size: 14px"></small>
@@ -455,7 +517,6 @@
                                     <input type="hidden" id="editDateRangeFrom" name="date_range_from">
                                     <input type="hidden" id="editDateRangeTo" name="date_range_to">
 
-                                    <!-- Date Range Picker Container (hidden by default) -->
                                     <div class="date-range-picker-container mt-2 d-none"
                                         id="editDateRangePickerContainer">
                                         <span id="editDateRangeDisplay" style="display: none;"></span>
@@ -529,7 +590,7 @@
                 </div>
             </div>
         </div>
-        <!-- Date View Modal for Multiple Days -->
+
         <div class="modal fade" id="dateViewModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
@@ -546,7 +607,6 @@
                                 <div class="card bg-light border-0">
                                     <div class="card-body py-3">
                                         <h6 class="card-title fw-semibold mb-0">
-
                                             Leave Applied Data:
                                             <span id="totalDaysCount" class="">0
                                             </span> Days
@@ -589,7 +649,7 @@
                 </div>
             </div>
         </div>
-        <!-- View Status Modal for Full Day -->
+
         <div class="modal fade" id="viewStatusModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog  viewmodal">
                 <div class="modal-content border-0">
@@ -651,7 +711,6 @@
                                 <i class="bi bi-paperclip me-2"></i> Attachments
                             </h6>
                             <div id="viewLeaveFiles" class="d-flex flex-wrap gap-3 mt-3">
-                                <!-- Files will be populated here -->
                             </div>
                             <div id="noFilesMessage" class="text-center py-3 bg-light rounded">
                                 <i class="bi bi-file-earmark-x text-muted" style="font-size: 2rem;"></i>
@@ -668,16 +727,28 @@
         </div>
     </div>
 
-    <!-- Include Flatpickr CSS and JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize variables
-          let currentLeavePage = 1;
-let entriesPerPage = 5;
-let allEmployeeLeaves = []; // ⭐ IMPORTANT
+
+            let allEmployeeLeaves = [];
+            let currentAbsentPage = 1;
+            let entriesPerPageAbsent = 5;
+            let allAbsentLeaves = [];
+
+
+
+            let currentAdminPage = 1;
+let entriesPerPageAdmin = 5;
+let allAdminLeaves = [];
+
+let currentEmployeePage = 1;
+let entriesPerPageEmployee = 5;
+
+
+
             let activeFilters = {
                 employee: '',
                 department: '',
@@ -686,7 +757,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
             };
             let currentRelatedLeaves = [];
 
-            // Flatpickr for single date fields
             const leaveDatePicker = flatpickr("#leaveDate", {
                 dateFormat: "Y-m-d",
                 defaultDate: "today"
@@ -696,8 +766,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 dateFormat: "Y-m-d"
             });
 
-
-            // Generic DateRangePicker class
             class DateRangePicker {
                 constructor(config) {
                     this.currentDate = new Date();
@@ -817,7 +885,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         this.render();
                     });
 
-                    // Apply button event listener
                     document.querySelector(this.config.applyBtn).addEventListener('click', () => {
                         if (this.selectedRange.start && this.selectedRange.end) {
                             const formattedRange =
@@ -830,11 +897,9 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                             document.getElementById(this.config.dateTo).value = this.formatDate(
                                 this.selectedRange.end, 'yyyy-MM-dd');
 
-                            // Check for holidays in the selected range
                             const fromDate = this.formatDate(this.selectedRange.start, 'yyyy-MM-dd');
                             const toDate = this.formatDate(this.selectedRange.end, 'yyyy-MM-dd');
 
-                            // Get employee ID based on which modal is open
                             let employeeId;
                             if (this.config.container === 'dateRangePickerContainer') {
                                 employeeId = document.querySelector('input[name="employee_id"]').value;
@@ -912,7 +977,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 }
             }
 
-            // Initialize pickers for Add modal
             const addLeaveDateRangePicker = new DateRangePicker({
                 month1Header: "month1Header",
                 month1Days: "month1Days",
@@ -930,7 +994,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 dateTo: "date_range_to"
             });
 
-            // Initialize pickers for Edit modal
             const editLeaveDateRangePicker = new DateRangePicker({
                 month1Header: "editMonth1Header",
                 month1Days: "editMonth1Days",
@@ -948,7 +1011,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 dateTo: "editDateRangeTo"
             });
 
-            // Filter date range picker
             const filterDateRangePicker = flatpickr("#dateRangePicker", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -970,22 +1032,37 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 }
             });
 
-
-            // DOM elements
             const leaveModal = new bootstrap.Modal(document.getElementById('leaveModal'));
             const viewStatusModal = new bootstrap.Modal(document.getElementById('viewStatusModal'));
             const editLeaveModal = new bootstrap.Modal(document.getElementById('editLeaveModal'));
             const addLeaveBtn = document.getElementById('addLeave');
             const saveLeaveBtn = document.getElementById('saveLeave');
-            const prevLeavePageBtn = document.getElementById('prevLeavePage');
-            const nextLeavePageBtn = document.getElementById('nextLeavePage');
-            const leavePageInfo = document.getElementById('leavePageInfo');
-            const leaveShowingInfo = document.getElementById('leaveShowingInfo');
-            const entriesPerPageSelect = document.getElementById('entriesPerPage');
+
             const clearFiltersBtn = document.getElementById('clearFiltersBtn');
             const clearFiltersBtnContainer = document.getElementById('clearFiltersBtnContainer');
 
-            // Filter elements
+
+
+
+            const prevAbsentPageBtn = document.getElementById('prevAbsentPage');
+            const nextAbsentPageBtn = document.getElementById('nextAbsentPage');
+            const absentPageInfo = document.getElementById('absentPageInfo');
+            const absentShowingInfo = document.getElementById('absentShowingInfo');
+            const entriesPerPageSelectAbsent = document.getElementById('entriesPerPageAbsent');
+
+
+            const prevAdminPageBtn = document.getElementById('prevAdminPage');
+const nextAdminPageBtn = document.getElementById('nextAdminPage');
+const adminPageInfo = document.getElementById('adminPageInfo');
+const adminShowingInfo = document.getElementById('adminShowingInfo');
+const entriesPerPageSelectAdmin = document.getElementById('entriesPerPageAdmin');
+
+const prevEmployeePageBtn = document.getElementById('prevEmployeePage');
+const nextEmployeePageBtn = document.getElementById('nextEmployeePage');
+const employeePageInfo = document.getElementById('employeePageInfo');
+const employeeShowingInfo = document.getElementById('employeeShowingInfo');
+const entriesPerPageSelectEmployee = document.getElementById('entriesPerPageEmployee');
+
             const employeeFilter = document.getElementById('employeeFilter');
             const employeeFilterText = document.getElementById('employeeFilterText');
             const departmentFilter = document.getElementById('departmentFilter');
@@ -993,20 +1070,14 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
             const statusFilter = document.getElementById('statusFilter');
             const statusFilterText = document.getElementById('statusFilterText');
 
-            // Duration radio buttons
             const fullDayRadio = document.getElementById('fullDay');
             const multipleDaysRadio = document.getElementById('multipleDays');
 
-            // Initialize the leave planner
             initLeavePlanner();
 
             if (addLeaveBtn) {
                 addLeaveBtn.addEventListener('click', openLeaveModal);
-
             }
-
-
-
 
             function initLeavePlanner() {
                 setupEventListeners();
@@ -1014,35 +1085,196 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
             }
 
             function setupEventListeners() {
-                // Save leave
                 saveLeaveBtn.addEventListener('click', validateAndSaveLeave);
-
-                // Update leave
                 document.getElementById('updateLeave').addEventListener('click', updateLeave);
 
-                // Pagination controls
-                prevLeavePageBtn.addEventListener('click', goToPrevLeavePage);
-                nextLeavePageBtn.addEventListener('click', goToNextLeavePage);
 
-                // Entries per page change
-              entriesPerPageSelect.addEventListener('change', function() {
-    entriesPerPage = parseInt(this.value);
-    currentLeavePage = 1;
-    renderEmployeeLeavesWithPagination(); // ✅ CORRECT
+                // Load leave types as direct menu items when dropdown is opened
+document.addEventListener('show.bs.dropdown', function(e) {
+    const dropdownButton = e.target;
+    const dropdownMenu = dropdownButton.nextElementSibling;
+
+    if (!dropdownMenu || !dropdownMenu.classList.contains('pending-absent-menu')) return;
+
+    const employeeId = dropdownMenu.getAttribute('data-employee-id');
+    const leaveId = dropdownMenu.getAttribute('data-leave-id');
+    const date = dropdownMenu.getAttribute('data-date');
+
+    // Don't reload if already loaded
+    if (dropdownMenu.hasAttribute('data-loaded')) return;
+
+    const container = dropdownMenu.querySelector('.leave-types-container');
+
+    if (!container) return;
+
+    // Show loading indicator
+    container.innerHTML = '<div class="dropdown-item text-muted"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading leave types...</div>';
+
+    // Fetch leave types from database
+    fetch(`/dashboard/employees/leave/types/${employeeId}`)
+        .then(response => response.json())
+        .then(leaveTypes => {
+            if (leaveTypes && leaveTypes.length > 0) {
+                // Clear container
+                container.innerHTML = '';
+
+                // Add a header for leave types
+                const headerLi = document.createElement('li');
+                headerLi.innerHTML = '<div class="dropdown-header text-muted small"><i class="bi bi-journal-bookmark-fill me-1"></i> Apply Leave</div>';
+                container.appendChild(headerLi);
+
+                // Create a menu item for each leave type
+                leaveTypes.forEach(leaveType => {
+                    // Extract just the leave type name (remove remaining days info if present)
+                    let displayText = leaveType.text;
+                    const bracketIndex = displayText.indexOf('[');
+                    if (bracketIndex > -1) {
+                        displayText = displayText.substring(0, bracketIndex).trim();
+                    }
+
+                    const li = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.className = 'dropdown-item leave-type-item';
+                    button.setAttribute('data-leave-type-id', leaveType.id);
+                    button.setAttribute('data-leave-id', leaveId);
+                    button.setAttribute('data-employee-id', employeeId);
+                    button.setAttribute('data-date', date);
+                    button.innerHTML = `<i class="bi bi-journal-bookmark me-2"></i> ${displayText}`;
+
+                    // Check if remaining days are available
+                    if (leaveType.remaining_days <= 0) {
+                        button.classList.add('text-muted');
+                        button.disabled = true;
+                        button.innerHTML = `<i class="bi bi-journal-bookmark me-2"></i> ${displayText} <span class="small text-danger">(No days left)</span>`;
+                    }
+
+                    li.appendChild(button);
+                    container.appendChild(li);
+                });
+
+                dropdownMenu.setAttribute('data-loaded', 'true');
+            } else {
+                container.innerHTML = '<div class="dropdown-item text-muted">No leave types available</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching leave types:', error);
+            container.innerHTML = '<div class="dropdown-item text-danger">Error loading leave types</div>';
+        });
 });
 
-                // Duration type change
+
+// Handle leave type selection from menu items and other actions
+document.addEventListener('click', function(e) {
+    // Handle leave type selection
+    const leaveTypeItem = e.target.closest('.leave-type-item');
+    if (leaveTypeItem && !leaveTypeItem.disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const leaveTypeId = leaveTypeItem.getAttribute('data-leave-type-id');
+        const leaveId = leaveTypeItem.getAttribute('data-leave-id');
+        const employeeId = leaveTypeItem.getAttribute('data-employee-id');
+        const date = leaveTypeItem.getAttribute('data-date');
+
+        if (leaveId && leaveTypeId) {
+            applyLeaveFromAbsent(leaveId, employeeId, date, leaveTypeId);
+
+            // Close the dropdown
+            const dropdown = leaveTypeItem.closest('.dropdown');
+            if (dropdown) {
+                const btn = dropdown.querySelector('button');
+                if (btn) {
+                    const bsDropdown = bootstrap.Dropdown.getInstance(btn);
+                    if (bsDropdown) {
+                        bsDropdown.hide();
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle mark as present
+    if (e.target.closest('.mark-present')) {
+        const btn = e.target.closest('.mark-present');
+        const leaveId = btn.getAttribute('data-id');
+        const employeeId = btn.getAttribute('data-employee-id');
+        const date = btn.getAttribute('data-date');
+        markAsPresent(leaveId, employeeId, date);
+    }
+
+    // Handle delete leave (if you want to keep it)
+    if (e.target.closest('.delete-leave')) {
+        const btn = e.target.closest('.delete-leave');
+        const leaveId = btn.getAttribute('data-id');
+        deleteLeave(leaveId);
+    }
+
+    // Handle view leave
+    if (e.target.closest('.view-leave')) {
+        const btn = e.target.closest('.view-leave');
+        const leaveId = btn.getAttribute('data-id');
+        viewLeave(leaveId);
+    }
+});
+
+
+
+             // Admin pagination
+    if (prevAdminPageBtn) {
+        prevAdminPageBtn.addEventListener('click', goToPrevAdminPage);
+    }
+    if (nextAdminPageBtn) {
+        nextAdminPageBtn.addEventListener('click', goToNextAdminPage);
+    }
+    if (entriesPerPageSelectAdmin) {
+        entriesPerPageSelectAdmin.addEventListener('change', function() {
+            entriesPerPageAdmin = parseInt(this.value);
+            currentAdminPage = 1;
+            renderAdminLeavesWithPagination();
+        });
+    }
+
+    // Employee pagination
+    if (prevEmployeePageBtn) {
+        prevEmployeePageBtn.addEventListener('click', goToPrevEmployeePage);
+    }
+    if (nextEmployeePageBtn) {
+        nextEmployeePageBtn.addEventListener('click', goToNextEmployeePage);
+    }
+    if (entriesPerPageSelectEmployee) {
+        entriesPerPageSelectEmployee.addEventListener('change', function() {
+            entriesPerPageEmployee = parseInt(this.value);
+            currentEmployeePage = 1;
+            renderEmployeeLeavesWithPagination();
+        });
+    }
+
+    // Absent pagination (existing)
+    if (entriesPerPageSelectAbsent) {
+        entriesPerPageSelectAbsent.addEventListener('change', function() {
+            entriesPerPageAbsent = parseInt(this.value);
+            currentAbsentPage = 1;
+            renderAbsentEmployeeTable();
+        });
+    }
+    if (prevAbsentPageBtn) {
+        prevAbsentPageBtn.addEventListener('click', goToPrevAbsentPage);
+    }
+    if (nextAbsentPageBtn) {
+        nextAbsentPageBtn.addEventListener('click', goToNextAbsentPage);
+    }
+
+
                 fullDayRadio.addEventListener('change', toggleDateFields);
                 multipleDaysRadio.addEventListener('change', toggleDateFields);
                 document.getElementById('firsthalf').addEventListener('change', toggleDateFields);
                 document.getElementById('secondhalf').addEventListener('change', toggleDateFields);
 
-                // Edit duration type change
                 document.querySelectorAll('input[name="edit_duration"]').forEach(radio => {
                     radio.addEventListener('change', toggleEditDateFields);
                 });
 
-                // Filter changes
                 employeeFilter.addEventListener('change', function() {
                     const selectedOption = this.options[this.selectedIndex];
                     if (selectedOption.value === '') {
@@ -1082,10 +1314,8 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     checkFiltersStatus();
                 });
 
-                // Clear filters button
                 clearFiltersBtn.addEventListener('click', clearAllFilters);
 
-                // Employee search
                 document.getElementById('employeeSearch').addEventListener('input', function() {
                     const searchTerm = this.value.toLowerCase();
                     const options = employeeFilter.options;
@@ -1097,7 +1327,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     }
                 });
 
-                // Department search
                 document.getElementById('departmentSearch').addEventListener('input', function() {
                     const searchTerm = this.value.toLowerCase();
                     const options = departmentFilter.options;
@@ -1109,7 +1338,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     }
                 });
 
-                // Update leave type info display
                 document.getElementById('leaveType').addEventListener('change', function() {
                     const selectedOption = this.options[this.selectedIndex];
                     const infoElement = document.getElementById('leaveTypeInfo');
@@ -1120,11 +1348,10 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         const startDate = selectedOption.dataset.start;
                         const endDate = selectedOption.dataset.end;
 
-                        infoElement.style.display = 'block'; // show only after selection
+                        infoElement.style.display = 'block';
                         infoElement.textContent =
                             `Available: ${remaining}/${days} days | Valid from ${formatDateForDisplay(startDate)} to ${formatDateForDisplay(endDate)}`;
 
-                        // Show warning if no remaining days
                         if (parseInt(remaining) <= 0) {
                             infoElement.style.color = 'red';
                             infoElement.textContent += ' - Cannot assign leave, no remaining days';
@@ -1132,11 +1359,10 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                             infoElement.style.color = '#6c757d';
                         }
                     } else {
-                        infoElement.style.display = 'none'; // hide if no valid selection
+                        infoElement.style.display = 'none';
                     }
                 });
 
-                // Update edit leave type info display
                 document.getElementById('editLeaveType').addEventListener('change', function() {
                     const selectedOption = this.options[this.selectedIndex];
                     const infoElement = document.getElementById('editLeaveTypeInfo');
@@ -1162,9 +1388,7 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     }
                 });
 
-                // Event delegation for dynamic elements
                 document.addEventListener('click', function(e) {
-                    // View leave details
                     if (e.target.classList.contains('view-leave')) {
                         const leaveId = e.target.getAttribute('data-id');
                         viewLeave(leaveId);
@@ -1177,33 +1401,26 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         const leaveId = e.target.getAttribute('data-id');
                         viewLeaveDates(leaveId);
                     }
-                    // Delete leave
                     if (e.target.classList.contains('delete-leave')) {
                         const leaveId = e.target.getAttribute('data-id');
                         deleteLeave(leaveId);
                     }
-
-                    // Approve leave
                     if (e.target.classList.contains('approve-leave')) {
                         const leaveId = e.target.getAttribute('data-id');
                         approveLeave(leaveId);
                     }
-
-                    // Reject leave
                     if (e.target.classList.contains('reject-leave')) {
                         const leaveId = e.target.getAttribute('data-id');
                         rejectLeave(leaveId);
                     }
                 });
 
-                // Add modal date change listeners
                 const employeeId = document.querySelector('input[name="employee_id"]').value;
 
                 document.getElementById('leaveDate').addEventListener('change', function() {
                     checkForHolidayOnDate(employeeId, this.value, 'holidayInfoSingle');
                 });
 
-                // For edit modal, we'll need to handle this differently since employee ID is dynamic
                 document.getElementById('editLeaveModal').addEventListener('show.bs.modal', function() {
                     const employeeId = document.getElementById('editEmployeeId').value;
                     const dateInput = document.getElementById('editLeaveDate');
@@ -1213,7 +1430,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                             checkForHolidayOnDate(employeeId, this.value, 'editHolidayInfoSingle');
                         });
 
-                        // Trigger change event to show holidays for the current date
                         if (dateInput.value) {
                             checkForHolidayOnDate(employeeId, dateInput.value, 'editHolidayInfoSingle');
                         }
@@ -1224,14 +1440,12 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
             function toggleDateFields() {
                 const durationType = document.querySelector('input[name="duration"]:checked').value;
 
-                // Hide all date fields first
                 document.getElementById('singleDateField').classList.add('d-none');
                 document.getElementById('dateRangeFields').classList.add('d-none');
 
-                // Show the appropriate date field based on selection
-                if (durationType === '2') { // Multiple days
+                if (durationType === '2') {
                     document.getElementById('dateRangeFields').classList.remove('d-none');
-                } else { // Full day, first half, or second half
+                } else {
                     document.getElementById('singleDateField').classList.remove('d-none');
                 }
             }
@@ -1239,20 +1453,277 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
             function toggleEditDateFields() {
                 const durationType = document.querySelector('input[name="edit_duration"]:checked').value;
 
-                // Hide all date fields first
                 document.getElementById('editSingleDateField').classList.add('d-none');
                 document.getElementById('editDateRangeFields').classList.add('d-none');
 
-                // Show the appropriate date field based on selection
-                if (durationType === '2') { // Multiple days
+                if (durationType === '2') {
                     document.getElementById('editDateRangeFields').classList.remove('d-none');
-                } else { // Full day, first half, or second half
+                } else {
                     document.getElementById('editSingleDateField').classList.remove('d-none');
                 }
 
-                // Update the hidden duration field
                 document.getElementById('editDurationType').value = durationType;
             }
+
+
+// Mark as Present - This will delete/remove the leave record
+function markAsPresent(leaveId, employeeId, date) {
+    // Format the date correctly
+    let formattedDate = date;
+    if (date && date.includes('T')) {
+        formattedDate = date.split('T')[0];
+    }
+
+    Swal.fire({
+        title: 'Mark as Present?',
+        text: "This will remove the leave record and mark the employee as present for this day.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, mark as present',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // First, delete the leave record
+            fetch(`/dashboard/employees/leave/delete/${leaveId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // After leave is deleted, mark attendance as present with formatted date
+                    return markAttendanceAsPresent(employeeId, formattedDate);
+                } else {
+                    throw new Error(data.message || 'Failed to delete leave');
+                }
+            })
+            .then(() => {
+                Swal.close();
+                showToast('Employee marked as present successfully', 'success');
+                fetchLeaves(); // Refresh the tables
+            })
+            .catch(error => {
+                Swal.close();
+                console.error('Error:', error);
+                showToast(error.message || 'An error occurred', 'error');
+            });
+        }
+    });
+}
+
+
+function markAttendanceAsPresent(employeeId, date) {
+    // Format the date correctly to Y-m-d format
+    let formattedDate = date;
+
+    // If date is in ISO format with timezone, convert it
+    if (date.includes('T')) {
+        formattedDate = date.split('T')[0];
+    }
+
+    // If date is a Date object, format it
+    if (date instanceof Date) {
+        formattedDate = date.toISOString().split('T')[0];
+    }
+
+    return fetch('/dashboard/employees/leave/mark-present-from-absent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            employee_id: employeeId,
+            date: formattedDate
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to mark attendance');
+        }
+        return data;
+    });
+}
+
+// Direct update leave type - NO MODAL, just update the leave_type_id in database
+function applyLeaveFromAbsent(leaveId, employeeId, date, leaveTypeId) {
+    // Format the date correctly
+    let formattedDate = date;
+    if (date && date.includes('T')) {
+        formattedDate = date.split('T')[0];
+    }
+
+    // Show loading indicator
+    Swal.fire({
+        title: 'Updating...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Prepare form data for update - only leave_type_id
+    const formData = new FormData();
+    formData.append('leave_type_id', leaveTypeId);
+    formData.append('_token', '{{ csrf_token() }}');
+
+    // Use the new dedicated endpoint
+    fetch(`/dashboard/employees/leave/update-type/${leaveId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        if (data.success) {
+            showToast('Leave type updated successfully', 'success');
+            fetchLeaves(); // Refresh the tables
+        } else {
+            showToast(data.message || 'Failed to update leave', 'error');
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        console.error('Error:', error);
+        showToast('An error occurred', 'error');
+    });
+}
+function getLeaveTypeName(leaveTypeId) {
+    const leaveTypes = {
+        1: 'Privilege Leave (PL)',
+        2: 'Casual Leave (CL)',
+        3: 'Sick Leave (SL)',
+        4: 'Maternity Leave (ML)',
+        5: 'Compensatory Off (Comp-off)',
+        6: 'Marriage Leave',
+        7: 'Paternity Leave',
+        8: 'Bereavement Leave',
+        9: 'UnPaid Leave (UL)'
+    };
+    return leaveTypes[leaveTypeId] || 'Leave';
+}
+// Update leave type
+function updateLeaveType(leaveId, leaveTypeId, reason, date) {
+    const formData = new FormData();
+    formData.append('leave_type_id', leaveTypeId);
+    formData.append('reason', reason || 'Updated from absent record');
+    formData.append('date', date);
+    formData.append('_method', 'PUT');
+    formData.append('_token', '{{ csrf_token() }}');
+
+    fetch(`/dashboard/employees/leave/update/${leaveId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Leave updated successfully', 'success');
+            fetchLeaves(); // Refresh the tables
+        } else {
+            showToast(data.message || 'Failed to update leave', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred', 'error');
+    });
+}
+
+
+
+            function renderAdminLeavesWithPagination() {
+    const tableBody = document.getElementById('adminLeaveTableBody');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '';
+
+    let userLeaves;
+    if (isSuperAdmin) {
+        userLeaves = allAdminLeaves;
+    } else {
+        userLeaves = allAdminLeaves.filter(leave => leave.employee_id === loggedInUserEmpId);
+    }
+
+    const total = userLeaves.length;
+    const start = (currentAdminPage - 1) * entriesPerPageAdmin;
+    const end = start + entriesPerPageAdmin;
+    const paginatedData = userLeaves.slice(start, end);
+
+    if (paginatedData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No leaves found</td></tr>`;
+    } else {
+        paginatedData.forEach(leave => {
+            const row = createLeaveRow(leave, 'admin');
+            tableBody.appendChild(row);
+        });
+    }
+
+    const totalPages = Math.ceil(total / entriesPerPageAdmin) || 1;
+    adminPageInfo.textContent = `Page ${currentAdminPage} of ${totalPages}`;
+    let startCount = total === 0 ? 0 : start + 1;
+    let endCount = Math.min(end, total);
+    adminShowingInfo.textContent = `Showing ${startCount} to ${endCount} of ${total} entries`;
+
+    if (prevAdminPageBtn) {
+        prevAdminPageBtn.disabled = currentAdminPage === 1;
+    }
+    if (nextAdminPageBtn) {
+        nextAdminPageBtn.disabled = currentAdminPage === totalPages;
+    }
+}
+
+function goToPrevAdminPage() {
+    if (currentAdminPage > 1) {
+        currentAdminPage--;
+        renderAdminLeavesWithPagination();
+    }
+}
+
+function goToNextAdminPage() {
+    const total = isSuperAdmin ? allAdminLeaves.length : allAdminLeaves.filter(leave => leave.employee_id === loggedInUserEmpId).length;
+    const totalPages = Math.ceil(total / entriesPerPageAdmin) || 1;
+    if (currentAdminPage < totalPages) {
+        currentAdminPage++;
+        renderAdminLeavesWithPagination();
+    }
+}
+
+function goToPrevEmployeePage() {
+    if (currentEmployeePage > 1) {
+        currentEmployeePage--;
+        renderEmployeeLeavesWithPagination();
+    }
+}
+
+function goToNextEmployeePage() {
+    const loggedInUserDept = "{{ auth()->user()->employee->departmentid->dep_name ?? '' }}";
+    const total = isSuperAdmin ? allEmployeeLeaves.length : allEmployeeLeaves.filter(leave =>
+        leave.employees?.departmentid?.dep_name === loggedInUserDept
+    ).length;
+    const totalPages = Math.ceil(total / entriesPerPageEmployee) || 1;
+    if (currentEmployeePage < totalPages) {
+        currentEmployeePage++;
+        renderEmployeeLeavesWithPagination();
+    }
+}
 
             function openLeaveModal() {
                 document.getElementById('leaveForm').reset();
@@ -1272,12 +1743,9 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 document.getElementById('holidayInfoSingle').innerHTML = '';
                 document.getElementById('holidayInfoRange').innerHTML = '';
 
-                // Load leave types for the current user
                 const employeeId = document.querySelector('input[name="employee_id"]').value;
                 if (employeeId) {
                     fetchLeaveTypes(employeeId);
-
-
                 }
 
                 leaveModal.show();
@@ -1295,7 +1763,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         const leaveTypeSelect = document.getElementById('leaveType');
                         leaveTypeSelect.innerHTML = '<option value="">Select Leave Type</option>';
 
-                        // Check if data is an array and has items
                         if (Array.isArray(data) && data.length > 0) {
                             data.forEach(leaveType => {
                                 const option = document.createElement('option');
@@ -1308,10 +1775,8 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                                 leaveTypeSelect.appendChild(option);
                             });
 
-                            // Show the first leave type info by default
                             if (data.length > 0) {
-                                const firstOption = leaveTypeSelect.options[
-                                    1]; // Index 1 because index 0 is "Select Leave Type"
+                                const firstOption = leaveTypeSelect.options[1];
                                 const infoElement = document.getElementById('leaveTypeInfo');
 
                                 infoElement.textContent =
@@ -1339,7 +1804,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     });
             }
 
-
             async function validateAndSaveLeave() {
                 const leaveTypeSelect = document.getElementById('leaveType');
                 const selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
@@ -1353,7 +1817,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
 
                 const remainingDays = parseInt(selectedOption.dataset.remaining);
 
-                // Check for multiple days leave
                 if (durationType === '2') {
                     const fromDate = document.getElementById('date_range_from').value;
                     const toDate = document.getElementById('date_range_to').value;
@@ -1375,7 +1838,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         return;
                     }
 
-                    // Check for holidays and Sundays in date range and filter them out
                     const dates = getDatesBetween(start, end);
                     const availableDates = [];
                     const unavailableDates = [];
@@ -1393,7 +1855,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         }
                     }
 
-                    // If no available dates after filtering, show error
                     if (availableDates.length === 0) {
                         showToast(
                             'No available dates in the selected range (all dates are holidays or Sundays)',
@@ -1401,7 +1862,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         return;
                     }
 
-                    // If some dates are unavailable, show info message
                     if (unavailableDates.length > 0) {
                         const unavailableDateStrings = unavailableDates.map(ud => {
                             const formattedDate = formatDateForDisplay(ud.date);
@@ -1411,7 +1871,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         showToast(`Skipping holidays/Sundays: ${unavailableDateStrings.join(', ')}`, 'info');
                     }
 
-                    // Update the date range to only include available dates
                     if (availableDates.length > 0) {
                         const firstAvailable = new Date(availableDates[0]);
                         const lastAvailable = new Date(availableDates[availableDates.length - 1]);
@@ -1419,24 +1878,19 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         document.getElementById('date_range_from').value = formatDateForStorage(firstAvailable);
                         document.getElementById('date_range_to').value = formatDateForStorage(lastAvailable);
 
-                        // Update the display
                         const fromDisplay = formatDateForDisplay(firstAvailable);
                         const toDisplay = formatDateForDisplay(lastAvailable);
                         document.getElementById('selectedDateRange').value = `${fromDisplay} to ${toDisplay}`;
 
-                        // Store available dates in a hidden field for the server
                         document.getElementById('availableDates').value = JSON.stringify(availableDates);
                     }
-                }
-                // For first half, second half, or full day
-                else {
+                } else {
                     const date = document.getElementById('leaveDate').value;
                     if (!date) {
                         showToast('Please select a valid date', 'error');
                         return;
                     }
 
-                    // Check for holiday or Sunday
                     const result = await isDateUnavailable(date, employeeId);
                     if (result.unavailable) {
                         const formattedDate = formatDateForDisplay(date);
@@ -1446,7 +1900,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         return;
                     }
 
-                    // For first half or second half, we count as 0.5 days against the balance
                     if ((durationType === '3' || durationType === '4') && remainingDays < 0.5) {
                         showToast('Cannot assign leave - not enough remaining days for this leave type',
                             'error');
@@ -1454,13 +1907,11 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     }
                 }
 
-                // Check if no remaining days (for full day)
                 if (durationType === '1' && remainingDays <= 0) {
                     showToast('Cannot assign leave - no remaining days available for this leave type', 'error');
                     return;
                 }
 
-                // Check shifts before saving
                 checkShifts().then((canProceed) => {
                     if (canProceed) {
                         saveLeave();
@@ -1468,13 +1919,11 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 });
             }
 
-
             async function checkShifts() {
                 const employeeId = document.querySelector('input[name="employee_id"]').value;
                 const duration = document.querySelector('input[name="duration"]:checked').value;
 
                 if (duration == 1 || duration == 3 || duration == 4) {
-                    // Single day check
                     const date = document.getElementById('leaveDate').value;
                     if (!date) return true;
 
@@ -1495,7 +1944,6 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                         return false;
                     }
                 } else {
-                    // Multiple days check
                     const fromDate = document.getElementById('date_range_from').value;
                     const toDate = document.getElementById('date_range_to').value;
 
@@ -1534,15 +1982,13 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 const leaveId = document.getElementById('leaveId').value;
                 const leaveType = formData.get('leave_type_id');
                 const duration = formData.get('duration');
-                const file = document.getElementById('leaveFile').files[0]; // Get single file
+                const file = document.getElementById('leaveFile').files[0];
 
                 checkShifts().then((canProceed) => {
                     if (!canProceed) return;
 
-                    // Collect selected dates
                     let dates = [];
                     if (multipleDaysRadio.checked) {
-                        // Use the filtered available dates
                         const availableDates = document.getElementById('availableDates').value;
                         if (availableDates) {
                             dates = JSON.parse(availableDates);
@@ -1561,21 +2007,17 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
 
                     const employeeId = formData.get('employee_id');
 
-                    // Build FormData for request
                     const fileData = new FormData();
 
-                    // Add single file if exists
                     if (file) {
                         fileData.append('file', file);
                     }
 
-                    // Other fields
                     fileData.append('employee_id', employeeId);
                     fileData.append('leave_type_id', leaveType);
                     fileData.append('duration', duration);
                     fileData.append('reason', formData.get('reason'));
-                    fileData.append('available_dates', JSON.stringify(
-                        dates)); // Send filtered dates to server
+                    fileData.append('available_dates', JSON.stringify(dates));
                     fileData.append('_token', '{{ csrf_token() }}');
 
                     if (multipleDaysRadio.checked) {
@@ -1632,21 +2074,23 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                     .then(response => response.json())
                     .then(data => {
                         renderLeaveTable(data);
+                        allAbsentLeaves = data.absent_leaves || [];
+                        renderAbsentEmployeeTable();
                     })
                     .catch(error => {
                         console.error('Error fetching leaves:', error);
                     });
             }
 
-          function renderLeaveTable(data) {
-    renderAdminLeaves(data.admin_leaves || []);
-
-    // ⭐ store full data
+           function renderLeaveTable(data) {
+    allAdminLeaves = data.admin_leaves || [];
     allEmployeeLeaves = data.employee_leaves || [];
+    allAbsentLeaves = data.absent_leaves || [];
 
+    renderAdminLeavesWithPagination();
     renderEmployeeLeavesWithPagination();
+    renderAbsentEmployeeTable();
 }
-
             const loggedInUserEmpId = {{ auth()->user()->employee->emp_id ?? 'null' }};
             const isSuperAdmin = {{ auth()->user()->hasRole('Super admin') ? 'true' : 'false' }};
 
@@ -1657,21 +2101,19 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 let userLeaves;
 
                 if (isSuperAdmin) {
-                    // Super admin sees all leaves
                     userLeaves = leaves;
                 } else {
-                    // Normal employee sees only their own leaves
                     userLeaves = leaves.filter(leave => leave.employee_id === loggedInUserEmpId);
                 }
 
                 if (userLeaves.length === 0) {
                     tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center py-4">
-                    No leaves found ${isSuperAdmin ? 'in the system' : 'for your account'}
-                </td>
-            </tr>
-        `;
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                No leaves found ${isSuperAdmin ? 'in the system' : 'for your account'}
+                            </td>
+                        </tr>
+                    `;
                     return;
                 }
 
@@ -1681,36 +2123,88 @@ let allEmployeeLeaves = []; // ⭐ IMPORTANT
                 });
             }
 
-function updatePaginationUI(total) {
+            function renderAbsentEmployeeTable() {
+                const tableBody = document.getElementById('absentEmployeeTableBody');
+                if (!tableBody) return;
 
-    const totalPages = Math.ceil(total / entriesPerPage) || 1;
+                tableBody.innerHTML = '';
 
-    // Page info
-    leavePageInfo.textContent = `Page ${currentLeavePage} of ${totalPages}`;
+                const loggedInUserDept = "{{ auth()->user()->employee->departmentid->dep_name ?? '' }}";
 
-    // Showing info
-    let start = (currentLeavePage - 1) * entriesPerPage + 1;
-    let end = Math.min(currentLeavePage * entriesPerPage, total);
+                let filteredAbsentLeaves;
 
-    leaveShowingInfo.textContent =
-        `Showing ${total === 0 ? 0 : start} to ${end} of ${total} entries`;
+                if (isSuperAdmin) {
+                    filteredAbsentLeaves = allAbsentLeaves;
+                } else if (loggedInUserDept) {
+                    filteredAbsentLeaves = allAbsentLeaves.filter(leave =>
+                        leave.employees?.departmentid?.dep_name === loggedInUserDept
+                    );
+                } else {
+                    filteredAbsentLeaves = [];
+                }
 
-    // Buttons
-    prevLeavePageBtn.disabled = currentLeavePage === 1;
-    nextLeavePageBtn.disabled = currentLeavePage === totalPages;
-}
+                const total = filteredAbsentLeaves.length;
+                const start = (currentAbsentPage - 1) * entriesPerPageAbsent;
+                const end = start + entriesPerPageAbsent;
+                const paginatedData = filteredAbsentLeaves.slice(start, end);
 
-            function renderEmployeeLeavesWithPagination() {
+                if (paginatedData.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">No absent records found</td>
+                        </tr>
+                    `;
+                } else {
+                    paginatedData.forEach(leave => {
+                        const row = createLeaveRow(leave, 'absent');
+                        tableBody.appendChild(row);
+                    });
+                }
 
+                const totalPages = Math.ceil(total / entriesPerPageAbsent) || 1;
+                absentPageInfo.textContent = `Page ${currentAbsentPage} of ${totalPages}`;
+
+                let startCount = total === 0 ? 0 : start + 1;
+                let endCount = Math.min(end, total);
+                absentShowingInfo.textContent = `Showing ${startCount} to ${endCount} of ${total} entries`;
+
+                if (prevAbsentPageBtn) {
+                    prevAbsentPageBtn.disabled = currentAbsentPage === 1;
+                }
+                if (nextAbsentPageBtn) {
+                    nextAbsentPageBtn.disabled = currentAbsentPage === totalPages;
+                }
+            }
+
+            function goToPrevAbsentPage() {
+                if (currentAbsentPage > 1) {
+                    currentAbsentPage--;
+                    renderAbsentEmployeeTable();
+                }
+            }
+
+            function goToNextAbsentPage() {
+                const total = isSuperAdmin ? allAbsentLeaves.length : allAbsentLeaves.filter(leave =>
+                    leave.employees?.departmentid?.dep_name === "{{ auth()->user()->employee->departmentid->dep_name ?? '' }}"
+                ).length;
+                const totalPages = Math.ceil(total / entriesPerPageAbsent) || 1;
+                if (currentAbsentPage < totalPages) {
+                    currentAbsentPage++;
+                    renderAbsentEmployeeTable();
+                }
+            }
+
+
+
+           function renderEmployeeLeavesWithPagination() {
     const tableBody = document.getElementById('employeeLeaveTableBody');
+    if (!tableBody) return;
+
     tableBody.innerHTML = '';
 
-    // Apply your existing filters
     const loggedInUserDept = "{{ auth()->user()->employee->departmentid->dep_name ?? '' }}";
-    const isSuperAdmin = {{ auth()->user()->hasRole('Super admin') ? 'true' : 'false' }};
 
     let filteredLeaves;
-
     if (isSuperAdmin) {
         filteredLeaves = allEmployeeLeaves;
     } else if (loggedInUserDept) {
@@ -1721,20 +2215,13 @@ function updatePaginationUI(total) {
         filteredLeaves = [];
     }
 
-    // ✅ Pagination logic
     const total = filteredLeaves.length;
-    const start = (currentLeavePage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-
+    const start = (currentEmployeePage - 1) * entriesPerPageEmployee;
+    const end = start + entriesPerPageEmployee;
     const paginatedData = filteredLeaves.slice(start, end);
 
-    // Render rows
     if (paginatedData.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center py-4">No employee leaves found</td>
-            </tr>
-        `;
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No employee leaves found</td></tr>`;
     } else {
         paginatedData.forEach(leave => {
             const row = createLeaveRow(leave, 'employee');
@@ -1742,41 +2229,46 @@ function updatePaginationUI(total) {
         });
     }
 
-    // ✅ Update pagination UI
-    updatePaginationUI(total);
+    const totalPages = Math.ceil(total / entriesPerPageEmployee) || 1;
+    employeePageInfo.textContent = `Page ${currentEmployeePage} of ${totalPages}`;
+    let startCount = total === 0 ? 0 : start + 1;
+    let endCount = Math.min(end, total);
+    employeeShowingInfo.textContent = `Showing ${startCount} to ${endCount} of ${total} entries`;
+
+    if (prevEmployeePageBtn) {
+        prevEmployeePageBtn.disabled = currentEmployeePage === 1;
+    }
+    if (nextEmployeePageBtn) {
+        nextEmployeePageBtn.disabled = currentEmployeePage === totalPages;
+    }
 }
 
             function renderEmployeeLeaves(leaves) {
                 const tableBody = document.getElementById('employeeLeaveTableBody');
                 tableBody.innerHTML = '';
 
-                // Get logged-in user's department and role
                 const loggedInUserDept = "{{ auth()->user()->employee->departmentid->dep_name ?? '' }}";
-                const isSuperAdmin = {{ auth()->user()->hasRole('Super admin') ? 'true' : 'false' }};
 
                 let filteredLeaves;
 
                 if (isSuperAdmin) {
-                    // Super admin sees all employee leaves
                     filteredLeaves = leaves;
                 } else if (loggedInUserDept) {
-                    // Admin (not super admin) sees only employees from same department
                     filteredLeaves = leaves.filter(leave =>
                         leave.employees?.departmentid?.dep_name === loggedInUserDept
                     );
                 } else {
-                    // fallback → no department info
                     filteredLeaves = [];
                 }
 
                 if (filteredLeaves.length === 0) {
                     tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center py-4">
-                    No employee leaves found ${!isSuperAdmin && loggedInUserDept ? 'in your department' : ''}
-                </td>
-            </tr>
-        `;
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                No employee leaves found ${!isSuperAdmin && loggedInUserDept ? 'in your department' : ''}
+                            </td>
+                        </tr>
+                    `;
                     return;
                 }
 
@@ -1786,7 +2278,6 @@ function updatePaginationUI(total) {
                 });
             }
 
-            // Helper functions
             function getDurationTypeText(duration) {
                 switch (duration) {
                     case 1:
@@ -1814,40 +2305,101 @@ function updatePaginationUI(total) {
 
             function getStatusDisplay(leave) {
                 return `
-            <div class="d-flex align-items-center">
-                <span class="rounded-circle me-2 mt-1 ${leave.leave_status == 2 ? 'bg-warning' : (leave.leave_status == 1 ? 'bg-success' : 'bg-danger')}"
-                    style="width: 10px; height: 10px; display: inline-block;"></span>
-                <span>${leave.leave_status == 2 ? 'Pending' : (leave.leave_status == 1 ? 'Approved' : 'Rejected')}</span>
-            </div>
-        `;
+                    <div class="d-flex align-items-center">
+                        <span class="rounded-circle me-2 mt-1 ${leave.leave_status == 2 ? 'bg-warning' : (leave.leave_status == 1 ? 'bg-success' : 'bg-danger')}"
+                            style="width: 10px; height: 10px; display: inline-block;"></span>
+                        <span>${leave.leave_status == 2 ? 'Pending' : (leave.leave_status == 1 ? 'Approved' : 'Rejected')}</span>
+                    </div>
+                `;
             }
 
-            function createLeaveRow(leave, type) {
-                const row = document.createElement('tr');
 
-                // Get employee ID
-                const employeeId = leave.employees.emp_id || leave.employee_id;
 
-                // Get the correct data for each column
-                const employeeName = leave.employees.fullname;
-                const leaveType = leave.leavetype?.leavetype_name_text || 'Absent';
-                const durationType = getDurationTypeText(leave.select_duration);
-                const appliedDate = formatDateWithDay(leave.created_at);
-                const status = getStatusDisplay(leave);
+function getAbsentActionsHtml(leave) {
+    const isPending = leave.leave_status == 2; // Pending status
+    const isApproved = leave.leave_status == 1; // Approved status
 
-                const userRole = @json(Auth::user()->roles->pluck('name')->first());
-                let actionsHtml = getActionsHtml(leave, userRole, type);
+    // For approved leaves, only show View option
+    if (isApproved) {
+        return `
+            <div class="dropdown">
+                <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="min-width: 150px;">
+                    <li>
+                        <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                            <i class="bi bi-eye-fill text-info me-2"></i> View Details
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        `;
+    }
 
-                // Handle duration display differently for multiple days
-                let durationDisplay = '';
-                if (leave.select_duration == 2) {
-                    // For multiple days, show day count and view button in Duration column
-                    const fromDate = formatDateWithDay(leave.leavedaterange_from);
-                    const toDate = formatDateWithDay(leave.leavedaterange_to);
-                    const dayCount = leave.days_count || calculateDayCount(leave.leavedaterange_from, leave
-                        .leavedaterange_to);
+    // For pending leaves - show leave types as direct menu items
+    return `
+        <div class="dropdown">
+            <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end pending-absent-menu" style="min-width: 220px;"
+                data-employee-id="${leave.employee_id}"
+                data-leave-id="${leave.leave_id}"
+                data-date="${leave.leavedate_no}">
 
-                    durationDisplay = `
+                <!-- Present option -->
+                <li>
+                    <button class="dropdown-item mark-present" data-id="${leave.leave_id}"
+                        data-employee-id="${leave.employee_id}"
+                        data-date="${leave.leavedate_no}">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i> Present
+                    </button>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <!-- Leave types will be dynamically inserted here -->
+                <li class="leave-types-container"></li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                        <i class="bi bi-eye-fill text-info me-2"></i> View Details
+                    </button>
+                </li>
+            </ul>
+        </div>
+    `;
+}
+
+function createLeaveRow(leave, type) {
+    const row = document.createElement('tr');
+    const employeeId = leave.employees?.emp_id || leave.employee_id;
+    const employeeName = leave.employees?.fullname || 'Unknown';
+    const leaveType = leave.leavetype?.leavetype_name_text || 'Absent';
+    const durationType = getDurationTypeText(leave.select_duration);
+    const appliedDate = formatDateWithDay(leave.created_at);
+    const status = getStatusDisplay(leave);
+    const userRole = @json(Auth::user()->roles->pluck('name')->first());
+
+    let actionsHtml = '';
+
+    // For absent table, show special action buttons
+    if (type === 'absent') {
+        actionsHtml = getAbsentActionsHtml(leave);
+    } else {
+        actionsHtml = getActionsHtml(leave, userRole, type);
+    }
+
+    let durationDisplay = '';
+    if (leave.select_duration == 2) {
+        const fromDate = formatDateWithDay(leave.leavedaterange_from);
+        const toDate = formatDateWithDay(leave.leavedaterange_to);
+        const dayCount = leave.days_count || calculateDayCount(leave.leavedaterange_from, leave.leavedaterange_to);
+
+        durationDisplay = `
             <div class="d-flex align-items-center justify-content-between">
                 <span>${fromDate} to ${toDate}</span>
                 <span class="badge bg-secondary ms-2">${dayCount} days</span>
@@ -1856,27 +2408,25 @@ function updatePaginationUI(total) {
                 <i class="bi bi-calendar-week me-1"></i> View Dates
             </button>
         `;
-                } else {
-                    // For single day leaves, show normal date
-                    durationDisplay = formatDateWithDay(leave.leavedate_no);
-                }
+    } else {
+        durationDisplay = formatDateWithDay(leave.leavedate_no);
+    }
 
-                row.innerHTML = `
+    row.innerHTML = `
         <td>
             <a href="/dashboard/employees/show/${employeeId}" style="text-decoration: none; color: inherit;">
-            <div class="d-flex align-items-center">
-                    <img src="${leave.employees.image ? '/employee_images/' + leave.employees.image : '/images/admin_default.jpg'}"
+                <div class="d-flex align-items-center">
+                    <img src="${leave.employees?.image ? '/employee_images/' + leave.employees.image : '/images/admin_default.jpg'}"
                         class="avatar-img rounded-circle me-2"
                         style="width: 32px; height: 32px; object-fit: cover;">
-
-                <div>
-                    <div class="fw-bold">${employeeName}</div>
-                    <div class="small text-muted">
-                        ${leave.employees?.departmentid?.dep_name || 'No Department'}
+                    <div>
+                        <div class="fw-bold">${employeeName}</div>
+                        <div class="small text-muted">
+                            ${leave.employees?.departmentid?.dep_name || 'No Department'}
+                        </div>
                     </div>
                 </div>
-            </div>
-             </a>
+            </a>
         </td>
         <td>
             <span class="fw-medium leavebadge">
@@ -1890,9 +2440,8 @@ function updatePaginationUI(total) {
         <td>${actionsHtml}</td>
     `;
 
-                return row;
-            }
-            // Helper function to calculate day count between two dates
+    return row;
+}
             function calculateDayCount(fromDate, toDate) {
                 const start = new Date(fromDate);
                 const end = new Date(toDate);
@@ -1900,172 +2449,145 @@ function updatePaginationUI(total) {
                 return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
             }
 
-
-
             function getActionsHtml(leave, userRole, leaveType) {
-
-
                 let actionsHtml = '';
-                const role = (userRole || 'super admin').trim().toLowerCase(); // Default to super admin if empty
+                const role = (userRole || 'super admin').trim().toLowerCase();
                 const type = (leaveType || '').trim().toLowerCase();
                 const isPending = leave.leave_status == 2;
                 const isApproved = leave.leave_status == 1;
                 const isRejected = leave.leave_status == 0;
 
-                console.log('Processed values:', {
-                    role,
-                    type,
-                    isPending,
-                    isApproved,
-                    isRejected
-                });
-
-                // Employee leaves
-                if (type === 'employee') {
-                    console.log('Processing employee leave');
-
+                if (type === 'employee' || type === 'absent') {
                     if (isPending) {
-                        // Both admin and super admin can approve/reject pending employee leaves
                         actionsHtml = `
-                <div class="dropdown">
-                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <button class="dropdown-item approve-leave" data-id="${leave.leave_id}">
-                                <i class="bi bi-check-circle-fill text-success me-2"></i> Approve
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item reject-leave" data-id="${leave.leave_id}">
-                                <i class="bi bi-x-circle-fill text-danger me-2"></i> Reject
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                <i class="bi bi-eye-fill text-info me-2"></i> View
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            `;
+                            <div class="dropdown">
+                                <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button class="dropdown-item approve-leave" data-id="${leave.leave_id}">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i> Approve
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item reject-leave" data-id="${leave.leave_id}">
+                                            <i class="bi bi-x-circle-fill text-danger me-2"></i> Reject
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                            <i class="bi bi-eye-fill text-info me-2"></i> View
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        `;
                     } else {
-                        // Approved or Rejected employee leaves - only view
                         actionsHtml = `
-                <div class="dropdown">
-                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                <i class="bi bi-eye-fill text-info me-2"></i> View
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            `;
+                            <div class="dropdown">
+                                <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                            <i class="bi bi-eye-fill text-info me-2"></i> View
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        `;
                     }
-                }
-                // Admin leaves
-                else if (type === 'admin') {
-
-
+                } else if (type === 'admin') {
                     if (role === 'admin') {
-
-
                         if (isPending) {
                             actionsHtml = `
-                    <div class="dropdown">
-                        <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button class="dropdown-item edit-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-pencil-fill text-primary me-2"></i> Edit
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-eye-fill text-success me-2"></i> View
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item delete-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-x-circle text-danger me-2"></i> Cancel
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                `;
+                                <div class="dropdown">
+                                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button class="dropdown-item edit-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-pencil-fill text-primary me-2"></i> Edit
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-eye-fill text-success me-2"></i> View
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item delete-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-x-circle text-danger me-2"></i> Cancel
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            `;
                         } else {
-                            // Approved or Rejected status - only view
                             actionsHtml = `
-                    <div class="dropdown">
-                        <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-eye-fill text-info me-2"></i> View
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                `;
+                                <div class="dropdown">
+                                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-eye-fill text-info me-2"></i> View
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            `;
                         }
                     } else if (role === 'super admin') {
-
-
                         if (isPending) {
                             actionsHtml = `
-                    <div class="dropdown">
-                        <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button class="dropdown-item approve-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-check-circle-fill text-success me-2"></i> Approve
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item reject-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-x-circle-fill text-danger me-2"></i> Reject
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-eye-fill text-info me-2"></i> View
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item delete-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-x-circle text-danger me-2"></i> Cancel
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                `;
+                                <div class="dropdown">
+                                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button class="dropdown-item approve-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i> Approve
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item reject-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-x-circle-fill text-danger me-2"></i> Reject
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-eye-fill text-info me-2"></i> View
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item delete-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-x-circle text-danger me-2"></i> Cancel
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            `;
                         } else {
-                            // Approved or Rejected status - only view
                             actionsHtml = `
-                    <div class="dropdown">
-                        <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
-                                    <i class="bi bi-eye-fill text-info me-2"></i> View
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                `;
+                                <div class="dropdown">
+                                    <button class="btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <button class="dropdown-item view-leave" data-id="${leave.leave_id}">
+                                                <i class="bi bi-eye-fill text-info me-2"></i> View
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            `;
                         }
                     }
                 }
@@ -2073,16 +2595,13 @@ function updatePaginationUI(total) {
                 return actionsHtml;
             }
 
-
-
             function viewLeave(leaveId) {
                 fetch(`/dashboard/employees/leave/show/${leaveId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             const leave = data.leave;
-                            let datesDisplay = formatDateWithDay(leave.leavedate_no || leave
-                                .leavedaterange_from);
+                            let datesDisplay = formatDateWithDay(leave.leavedate_no || leave.leavedaterange_from);
 
                             if (leave.select_duration == 2) {
                                 const fromDate = formatDateWithDay(leave.leavedaterange_from);
@@ -2091,8 +2610,7 @@ function updatePaginationUI(total) {
                             }
 
                             document.getElementById('viewEmployeeName').textContent = leave.employees.fullname;
-                            document.getElementById('viewEmployeeDept').textContent = leave.employees
-                                .departmentid ?
+                            document.getElementById('viewEmployeeDept').textContent = leave.employees.departmentid ?
                                 leave.employees.departmentid.dep_name : 'No Department';
 
                             const employeeImage = document.getElementById('viewEmployeeImage');
@@ -2101,8 +2619,7 @@ function updatePaginationUI(total) {
                                 '/images/admin_default.jpg';
                             employeeImage.alt = leave.employees.fullname;
 
-                            document.getElementById('viewLeaveType').textContent = leave.leavetype
-                                ?.leavetype_name_text || 'Absent';
+                            document.getElementById('viewLeaveType').textContent = leave.leavetype?.leavetype_name_text || 'Absent';
                             let durationText = '';
 
                             if (leave.select_duration == 1) {
@@ -2119,8 +2636,7 @@ function updatePaginationUI(total) {
 
                             document.getElementById('viewLeaveDuration').textContent = durationText;
                             document.getElementById('viewLeaveDates').textContent = datesDisplay;
-                            document.getElementById('viewLeaveReason').textContent = leave.reason_forleave ||
-                                'Not specified';
+                            document.getElementById('viewLeaveReason').textContent = leave.reason_forleave || 'Not specified';
 
                             const statusBadge = document.getElementById('viewCurrentStatus');
                             statusBadge.textContent = leave.leave_status == 2 ? 'Pending' :
@@ -2220,35 +2736,27 @@ function updatePaginationUI(total) {
                             document.getElementById('editEmployeeId').value = leave.employee_id;
                             document.getElementById('editLeaveEmployee').value = leave.employees.fullname;
 
-                            // Set the duration type
                             document.getElementById('editDurationType').value = leave.select_duration;
 
-                            // Set the appropriate radio button
                             const durationRadio = document.getElementById(
                                 `edit${getDurationTypeName(leave.select_duration)}`);
                             if (durationRadio) {
                                 durationRadio.checked = true;
                             }
 
-                            // Fetch leave types for this employee
                             fetchLeaveTypesForEdit(leave.employee_id, leave.leave_type_id);
 
-                            // Handle different duration types
                             if (leave.select_duration == 2) {
-                                // For multiple days, show date range
                                 document.getElementById('editLeaveDate').value = '';
 
-                                // Set date range values
                                 document.getElementById('editDateRangeFrom').value = leave.leavedaterange_from;
                                 document.getElementById('editDateRangeTo').value = leave.leavedaterange_to;
 
-                                // Set the date range display
                                 const fromDate = editformatDateForDisplay(new Date(leave.leavedaterange_from));
                                 const toDate = editformatDateForDisplay(new Date(leave.leavedaterange_to));
                                 document.getElementById('editSelectedDateRange').value =
                                     `${fromDate} To ${toDate}`;
 
-                                // Initialize date range picker with existing values
                                 if (window.editDateRangePicker) {
                                     window.editDateRangePicker.selectedRange = {
                                         start: new Date(leave.leavedaterange_from),
@@ -2257,21 +2765,16 @@ function updatePaginationUI(total) {
                                     window.editDateRangePicker.render();
                                 }
                             } else {
-                                // For single day leaves
-                                document.getElementById('editLeaveDate').value = formatDateForStorage(new Date(
-                                    leave.leavedate_no));
+                                document.getElementById('editLeaveDate').value = formatDateForStorage(new Date(leave.leavedate_no));
                                 document.getElementById('editDateRangeFrom').value = '';
                                 document.getElementById('editDateRangeTo').value = '';
                                 document.getElementById('editSelectedDateRange').value = '';
                             }
 
-                            // Toggle the date fields based on duration type
                             toggleEditDateFields();
 
                             document.getElementById('editLeaveReason').value = leave.reason_forleave;
 
-                            // Display existing files
-                            // Display existing file
                             const filePreviewContainer = document.getElementById('editFilePreviewContainer');
                             filePreviewContainer.innerHTML = '';
 
@@ -2284,21 +2787,17 @@ function updatePaginationUI(total) {
                                     filePreviewContainer.appendChild(fileTitle);
 
                                     const fileItem = document.createElement('div');
-                                    fileItem.className =
-                                        'border rounded p-2 d-flex align-items-center existing-file';
+                                    fileItem.className = 'border rounded p-2 d-flex align-items-center existing-file';
 
-                                    // File icon
                                     const fileIcon = document.createElement('i');
                                     fileIcon.className = getFileIconClass(file.name);
                                     fileItem.appendChild(fileIcon);
 
-                                    // File name
                                     const fileName = document.createElement('span');
                                     fileName.className = 'ms-2 small';
                                     fileName.textContent = file.name;
                                     fileItem.appendChild(fileName);
 
-                                    // For images, create a preview
                                     if (file.type && file.type.startsWith('image/')) {
                                         const imgPreview = document.createElement('img');
                                         imgPreview.src = file.url;
@@ -2318,13 +2817,11 @@ function updatePaginationUI(total) {
                                         fileItem.appendChild(imgPreview);
                                     }
 
-                                    // Remove button
                                     const removeBtn = document.createElement('button');
                                     removeBtn.className = 'btn btn-sm btn-link text-danger ms-2';
                                     removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
                                     removeBtn.onclick = (e) => {
                                         e.preventDefault();
-                                        // Mark file for deletion
                                         const deleteInput = document.createElement('input');
                                         deleteInput.type = 'hidden';
                                         deleteInput.name = 'delete_file';
@@ -2357,7 +2854,6 @@ function updatePaginationUI(total) {
                 return `${day}-${month}-${year}`;
             }
 
-            // Helper function to get duration type name
             function getDurationTypeName(durationType) {
                 switch (durationType) {
                     case 1:
@@ -2385,7 +2881,6 @@ function updatePaginationUI(total) {
                         const leaveTypeSelect = document.getElementById('editLeaveType');
                         leaveTypeSelect.innerHTML = '<option value="">Select Leave Type</option>';
 
-                        // Check if data is an array and has items
                         if (Array.isArray(data) && data.length > 0) {
                             data.forEach(leaveType => {
                                 const option = document.createElement('option');
@@ -2396,7 +2891,6 @@ function updatePaginationUI(total) {
                                 option.dataset.start = leaveType.start_date;
                                 option.dataset.end = leaveType.end_date;
 
-                                // Select the current leave type
                                 if (leaveType.id == selectedLeaveTypeId) {
                                     option.selected = true;
                                 }
@@ -2404,7 +2898,6 @@ function updatePaginationUI(total) {
                                 leaveTypeSelect.appendChild(option);
                             });
 
-                            // Show the selected leave type info
                             const selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
                             const infoElement = document.getElementById('editLeaveTypeInfo');
 
@@ -2435,14 +2928,14 @@ function updatePaginationUI(total) {
                         showToast('Error loading leave types', 'error');
                     });
             }
+
             async function updateLeave() {
                 const formData = new FormData(document.getElementById('editLeaveForm'));
                 const leaveId = document.getElementById('editLeaveId').value;
                 const employeeId = document.getElementById('editEmployeeId').value;
                 const durationType = document.querySelector('input[name="edit_duration"]:checked').value;
-                const file = document.getElementById('editLeaveFile').files[0]; // Get single file
+                const file = document.getElementById('editLeaveFile').files[0];
 
-                // For multiple days, filter out unavailable dates
                 if (durationType === '2') {
                     const fromDate = document.getElementById('editDateRangeFrom').value;
                     const toDate = document.getElementById('editDateRangeTo').value;
@@ -2453,20 +2946,13 @@ function updatePaginationUI(total) {
                     }
 
                     const dates = getDatesBetween(new Date(fromDate), new Date(toDate));
-                    const {
-                        availableDates,
-                        unavailableDates
-                    } = await filterUnavailableDates(dates, employeeId);
+                    const { availableDates, unavailableDates } = await filterUnavailableDates(dates, employeeId);
 
-                    // If no available dates after filtering, show error
                     if (availableDates.length === 0) {
-                        showToast(
-                            'No available dates in the selected range (all dates are holidays or Sundays)',
-                            'error');
+                        showToast('No available dates in the selected range (all dates are holidays or Sundays)', 'error');
                         return;
                     }
 
-                    // If some dates are unavailable, show info message
                     if (unavailableDates.length > 0) {
                         const unavailableDateStrings = unavailableDates.map(ud => {
                             const formattedDate = formatDateForDisplay(ud.date);
@@ -2476,11 +2962,9 @@ function updatePaginationUI(total) {
                         showToast(`Skipping holidays/Sundays: ${unavailableDateStrings.join(', ')}`, 'info');
                     }
 
-                    // Update the form data with filtered dates
                     formData.append('dates', JSON.stringify(availableDates));
                 }
 
-                // Process file
                 if (file) {
                     formData.append('file', file);
                 }
@@ -2639,17 +3123,8 @@ function updatePaginationUI(total) {
                 fetchLeaves();
             }
 
-           function goToNextLeavePage() {
-    currentLeavePage++;
-    renderEmployeeLeavesWithPagination();
-}
 
-function goToPrevLeavePage() {
-    if (currentLeavePage > 1) {
-        currentLeavePage--;
-        renderEmployeeLeavesWithPagination();
-    }
-}
+
             async function filterUnavailableDates(dates, employeeId) {
                 const availableDates = [];
                 const unavailableDates = [];
@@ -2673,7 +3148,6 @@ function goToPrevLeavePage() {
                 };
             }
 
-            // Holiday-related functions
             function fetchHolidays(employeeId, startDate = null, endDate = null) {
                 let url = `/dashboard/employees/holidays/employee?employee_id=${employeeId}`;
 
@@ -2720,7 +3194,6 @@ function goToPrevLeavePage() {
                 container.innerHTML = html;
             }
 
-            // Update the checkForHolidayOnDate function to handle empty dates
             async function checkForHolidayOnDate(employeeId, date, containerId) {
                 if (!date) {
                     document.getElementById(containerId).innerHTML = '';
@@ -2731,7 +3204,6 @@ function goToPrevLeavePage() {
                 displayHolidayInfo(holidays, containerId);
             }
 
-            // Update the checkForHolidaysInRange function to handle empty dates
             async function checkForHolidaysInRange(employeeId, startDate, endDate, containerId) {
                 if (!startDate || !endDate) {
                     document.getElementById(containerId).innerHTML = '';
@@ -2743,7 +3215,6 @@ function goToPrevLeavePage() {
             }
 
             async function isDateUnavailable(date, employeeId) {
-                // Check if it's Sunday (0 = Sunday)
                 const dateObj = new Date(date);
                 if (dateObj.getDay() === 0) {
                     return {
@@ -2752,7 +3223,6 @@ function goToPrevLeavePage() {
                     };
                 }
 
-                // Check if it's a holiday for the employee's department
                 try {
                     const response = await fetch(
                         `/dashboard/employees/holidays/check?date=${date}&employee_id=${employeeId}`);
@@ -2769,7 +3239,6 @@ function goToPrevLeavePage() {
                     console.error('Error checking holiday:', error);
                 }
 
-                // NEW: Check if it's a day-off shift
                 try {
                     const shiftResponse = await fetch(
                         `/dashboard/employees/shift/check-dayoff?date=${date}&employee_id=${employeeId}`);
@@ -2864,9 +3333,6 @@ function goToPrevLeavePage() {
                 });
             }
 
-
-
-
             function viewLeaveDates(leaveId) {
                 fetch(`/dashboard/employees/leave/dates/${leaveId}`)
                     .then(response => response.json())
@@ -2877,15 +3343,12 @@ function goToPrevLeavePage() {
                             const appliedDatesList = document.getElementById('appliedDatesList');
                             const holidaysList = document.getElementById('holidaysList');
 
-                            // Clear previous content
                             appliedDatesList.innerHTML = '';
                             holidaysList.innerHTML = '';
 
-                            // Set total days count (only working days, excluding holidays/weekends)
                             const workingDays = data.dates.filter(date => date.type === 'working-day');
                             totalDaysCount.textContent = workingDays.length;
 
-                            // Separate applied dates from holidays/weekends
                             const appliedDates = [];
                             const holidayDates = [];
 
@@ -2897,37 +3360,28 @@ function goToPrevLeavePage() {
                                 }
                             });
 
-                            // Display applied dates (only working days)
                             if (appliedDates.length > 0) {
                                 appliedDates.forEach(dateInfo => {
                                     const dateItem = document.createElement('div');
                                     dateItem.className = 'applied-date d-flex align-items-center py-2';
-                                    dateItem.innerHTML = `
-
-                            <span>${dateInfo.formatted_date}</span>
-                        `;
+                                    dateItem.innerHTML = `<span>${dateInfo.formatted_date}</span>`;
                                     appliedDatesList.appendChild(dateItem);
                                 });
                             } else {
                                 appliedDatesList.innerHTML = `
-                        <div class="text-center py-3 text-muted">
-                            <i class="bi bi-calendar-x me-2"></i>No applied dates
-                        </div>
-                    `;
+                                    <div class="text-center py-3 text-muted">
+                                        <i class="bi bi-calendar-x me-2"></i>No applied dates
+                                    </div>
+                                `;
                             }
 
-                            // Display holidays and weekends
                             if (holidayDates.length > 0) {
                                 holidayDates.forEach(dateInfo => {
                                     const holidayItem = document.createElement('div');
-                                    holidayItem.className =
-                                        'holiday-date d-flex align-items-center py-2';
-
-
+                                    holidayItem.className = 'holiday-date d-flex align-items-center py-2';
 
                                     let holidayType = '';
 
-                                    // In the viewLeaveDates function, update the display logic
                                     if (dateInfo.type === 'weekend') {
                                         holidayType = 'Weekend Holiday';
                                     } else if (dateInfo.type === 'dayoff') {
@@ -2938,16 +3392,12 @@ function goToPrevLeavePage() {
                                         holidayType = 'Religious Holiday';
                                     }
 
-                                    let content = `
-
-                            <span>${dateInfo.formatted_date}</span>
-                        `;
+                                    let content = `<span>${dateInfo.formatted_date}</span>`;
 
                                     if (dateInfo.type === 'weekend') {
                                         content += ` - <span class="text-muted">${holidayType}</span>`;
                                     } else if (dateInfo.holiday_name) {
-                                        content +=
-                                            ` - ${dateInfo.holiday_name} <span class="text-muted">(${holidayType})</span>`;
+                                        content += ` - ${dateInfo.holiday_name} <span class="text-muted">(${holidayType})</span>`;
                                     }
 
                                     holidayItem.innerHTML = content;
@@ -2955,10 +3405,10 @@ function goToPrevLeavePage() {
                                 });
                             } else {
                                 holidaysList.innerHTML = `
-                        <div class="text-center py-3 text-muted">
-                            <i class="bi bi-emoji-smile me-2"></i>No holidays in this period
-                        </div>
-                    `;
+                                    <div class="text-center py-3 text-muted">
+                                        <i class="bi bi-emoji-smile me-2"></i>No holidays in this period
+                                    </div>
+                                `;
                             }
 
                             dateViewModal.show();
@@ -2971,7 +3421,6 @@ function goToPrevLeavePage() {
                         showToast('An error occurred', 'error');
                     });
             }
-
         });
     </script>
 
@@ -3160,7 +3609,6 @@ function goToPrevLeavePage() {
             font-weight: normal;
         }
 
-        /* Date Range Picker Styles */
         .date-range-picker-container {
             position: absolute;
             z-index: 1000;
@@ -3259,7 +3707,6 @@ function goToPrevLeavePage() {
             max-width: 800px;
         }
 
-        /* Status badges */
         .badge-pending {
             background-color: #fff3cd;
             color: #856404;
@@ -3275,7 +3722,6 @@ function goToPrevLeavePage() {
             color: #721c24;
         }
 
-        /* File cards */
         .file-card {
             width: 120px;
             border: 1px solid #e9ecef;
@@ -3310,7 +3756,6 @@ function goToPrevLeavePage() {
             text-overflow: ellipsis;
         }
 
-        /* File Preview Styles */
         .file-preview-container {
             margin-top: 1rem;
         }
@@ -3367,7 +3812,6 @@ function goToPrevLeavePage() {
             object-fit: contain;
         }
 
-        /* File Type Icons */
         .bi-file-earmark-pdf-fill {
             color: #dc3545;
         }
@@ -3395,9 +3839,7 @@ function goToPrevLeavePage() {
         .bi-file-earmark-zip-fill {
             color: #fd7e14;
         }
-    </style>
 
-    <style>
         .control-select {
             background-color: #fff;
             border: 1px solid #ced4da;
@@ -3422,7 +3864,6 @@ function goToPrevLeavePage() {
             background-color: #dedfe0;
         }
 
-        /* Professional Date View Modal Styles */
         #dateViewModal .modal-header {
             border-bottom: 1px solid #dee2e6;
             padding: 1rem 1.5rem;
@@ -3454,7 +3895,6 @@ function goToPrevLeavePage() {
         }
 
         #totalDaysCount {
-
             font-size: 1.2rem;
         }
 
@@ -3472,7 +3912,6 @@ function goToPrevLeavePage() {
             color: #6c757d !important;
         }
 
-        /* Icon colors */
         .bi-calendar-check {
             color: #28a745 !important;
         }

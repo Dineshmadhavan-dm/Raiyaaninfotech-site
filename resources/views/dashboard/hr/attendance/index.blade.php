@@ -1600,7 +1600,41 @@ if (holiday) {
                     document.getElementById('addCheckOutTime')._flatpickr.clear();
                     document.getElementById('addWorkingFrom').value = 'office';
                     document.getElementById('addAttendanceStatus').value = '1'; // default to present
-                    document.getElementById('addHalfDayOptions').style.display = 'none';
+
+const isSwapped = shifts[employee.emp_id] &&
+                  shifts[employee.emp_id][dateString] &&
+                  shifts[employee.emp_id][dateString].is_swaped == 1;
+
+const attendanceSelect = document.getElementById('addAttendanceStatus');
+
+// Always ensure Half Day exists
+let halfDayOption = attendanceSelect.querySelector('option[value="3"]');
+
+if (!halfDayOption) {
+    halfDayOption = document.createElement('option');
+    halfDayOption.value = '3';
+    halfDayOption.text = 'Half Day';
+    attendanceSelect.appendChild(halfDayOption);
+}
+
+// ✅ Toggle instead of remove
+if (isSwapped) {
+
+    halfDayOption.disabled = true;
+    halfDayOption.style.display = 'none';
+
+    document.getElementById('addHalfDayOptions').style.display = 'none';
+
+    // Reset if already selected
+    if (attendanceSelect.value === '3') {
+        attendanceSelect.value = '1';
+    }
+
+} else {
+
+    halfDayOption.disabled = false;
+    halfDayOption.style.display = 'block';
+}
 
                     // Set default clock in/out times based on shift
                     const [fromHour, fromMin] = shiftFromTime.split(':').map(Number);
@@ -1619,32 +1653,51 @@ if (holiday) {
                     document.getElementById('addCheckOutTime')._flatpickr.setDate(toTimeStr, true, 'h:i K');
 
                     // Add event listener for half day type changes
-                    document.getElementById('addAttendanceStatus').addEventListener('change', function () {
-                        if (this.value === '3') { // half_day
-                            const halfDayType = document.querySelector('input[name="half_day_type"]:checked')
-                                .value;
-                            updateHalfDayTimes(halfDayType, shiftFromTime, shiftToTime, 'add');
-                        } else if (this.value === '1' || this.value === '2') { // present or late
-                            // Reset to normal times
-                            document.getElementById('addCheckInTime')._flatpickr.setDate(fromTimeStr, true,
-                                'h:i K');
-                            document.getElementById('addCheckOutTime')._flatpickr.setDate(toTimeStr, true,
-                                'h:i K');
-                        } else if (this.value === '0') { // absent
-                            document.getElementById('addCheckInTime')._flatpickr.clear();
-                            document.getElementById('addCheckOutTime')._flatpickr.clear();
-                        }
-                    });
+                  document.getElementById('addAttendanceStatus').onchange = function () {
 
+    const isSwapped = shifts[employee.emp_id] &&
+                      shifts[employee.emp_id][dateString] &&
+                      shifts[employee.emp_id][dateString].is_swaped == 1;
+
+ if (isSwapped) {
+
+    document.getElementById('addHalfDayOptions').style.display = 'none';
+
+    // Prevent selecting half day
+    if (this.value === '3') {
+        this.value = '1';
+    }
+
+    return;
+}
+
+    if (this.value === '3') {
+        document.getElementById('addHalfDayOptions').style.display = 'block';
+        const halfDayType = document.querySelector('input[name="half_day_type"]:checked').value;
+        updateHalfDayTimes(halfDayType, shiftFromTime, shiftToTime, 'add');
+    } else if (this.value === '1' || this.value === '2') {
+        document.getElementById('addCheckInTime')._flatpickr.setDate(fromTimeStr, true, 'h:i K');
+        document.getElementById('addCheckOutTime')._flatpickr.setDate(toTimeStr, true, 'h:i K');
+    } else if (this.value === '0') {
+        document.getElementById('addCheckInTime')._flatpickr.clear();
+        document.getElementById('addCheckOutTime')._flatpickr.clear();
+    }
+};
                     // Add event listener for half day type radio buttons
-                    document.querySelectorAll('input[name="half_day_type"]').forEach(radio => {
-                        radio.addEventListener('change', function () {
-                            if (document.getElementById('addAttendanceStatus').value ===
-                                '3') { // half_day
-                                updateHalfDayTimes(this.value, shiftFromTime, shiftToTime, 'add');
-                            }
-                        });
-                    });
+                  document.querySelectorAll('input[name="half_day_type"]').forEach(radio => {
+    radio.onchange = function () {
+
+        const isSwapped = shifts[employee.emp_id] &&
+                          shifts[employee.emp_id][dateString] &&
+                          shifts[employee.emp_id][dateString].is_swaped == 1;
+
+        if (isSwapped) return;
+
+        if (document.getElementById('addAttendanceStatus').value === '3') {
+            updateHalfDayTimes(this.value, shiftFromTime, shiftToTime, 'add');
+        }
+    };
+});
 
                     // Get IP address
                     fetch('/get-ip-address')
@@ -2327,6 +2380,11 @@ document.getElementById('assignLeaveDuration').value = '1';
                         const dateString = document.getElementById('editAttendanceDate').value;
                         updateTimeFieldsBasedOnShift(this.value, employeeId, dateString, 'edit');
                     });
+
+
+
+
+
                     document.getElementById('addAttendanceStatus').addEventListener('change', function () {
                         const halfDayOptions = document.getElementById('addHalfDayOptions');
                         if (this.value === '3') { // half_day
@@ -3287,7 +3345,37 @@ if (isSwapped && statusAbbr) {
                     document.getElementById('editAttendanceEmployee').value = employee.emp_id;
                     document.getElementById('editAttendanceDate').value = attendance.attendancedate_no;
 
+const isSwapped = shifts[employee.emp_id] &&
+                  shifts[employee.emp_id][attendance.attendancedate_no] &&
+                  shifts[employee.emp_id][attendance.attendancedate_no].is_swaped == 1;
 
+const attendanceSelect = document.getElementById('editAttendanceStatus');
+
+let halfDayOption = attendanceSelect.querySelector('option[value="3"]');
+
+if (!halfDayOption) {
+    halfDayOption = document.createElement('option');
+    halfDayOption.value = '3';
+    halfDayOption.text = 'Half Day';
+    attendanceSelect.appendChild(halfDayOption);
+}
+
+if (isSwapped) {
+
+    halfDayOption.disabled = true;
+    halfDayOption.style.display = 'none';
+
+    document.getElementById('editHalfDayOptions').style.display = 'none';
+
+    if (attendanceSelect.value === '3') {
+        attendanceSelect.value = '1';
+    }
+
+} else {
+
+    halfDayOption.disabled = false;
+    halfDayOption.style.display = 'block';
+}
 
                     const wasHoliday = holidays.some(holiday =>
                         holiday.date === attendance.attendancedate_no &&

@@ -183,49 +183,59 @@ class LeaveController extends Controller
             })
             ->exists();
     }
-    public function getLeaveTypesByEmployee($employeeId)
-    {
-        // Get the employee
-        $employee = Employee::find($employeeId);
+public function getLeaveTypesByEmployee($employeeId)
+{
+    // Get the employee
+    $employee = Employee::find($employeeId);
 
-        if (!$employee) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Employee not found'
-            ], 404);
-        }
-
-        // Get leave types assigned to this specific employee
-        $leaveTypes = Leavetype::where('delete_status', 1)
-            ->where('employee_name_id', $employeeId)
-            ->with(['employee', 'department'])
-            ->get()
-            ->map(function ($leaveType) use ($employeeId) {
-                // Calculate used days for this specific leave type and employee
-                $usedDays = Leave::where('employee_id', $employeeId)
-                    ->where('leave_type_id', $leaveType->leavetype_id)
-                    ->where('leave_status', '!=', 3) // Not rejected
-                    ->whereBetween('leavedate_no', [$leaveType->leave_start_from, $leaveType->leave_end_to])
-                    ->count();
-
-                $remainingDays = $leaveType->leave_days - $usedDays;
-
-                return [
-                    'id' => $leaveType->leavetype_id,
-                    'text' => $leaveType->leavetype_name_text .
-                        " [{$remainingDays}/{$leaveType->leave_days} days remaining] " .
-                        "[" . date('M', strtotime($leaveType->leave_start_from)) . " - " .
-                        date('M', strtotime($leaveType->leave_end_to)) . "]",
-                    'leave_days' => $leaveType->leave_days,
-                    'start_date' => $leaveType->leave_start_from,
-                    'end_date' => $leaveType->leave_end_to,
-                    'remaining_days' => $remainingDays
-                ];
-            });
-
-        return response()->json($leaveTypes);
+    if (!$employee) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Employee not found'
+        ], 404);
     }
 
+    // Define the 3 leave types only (PL, CL, SL)
+    $leaveTypesData = [
+        1 => ['name' => 'Privilege Leave (PL)', 'default_days' => 12],
+        2 => ['name' => 'Casual Leave (CL)', 'default_days' => 12],
+        3 => ['name' => 'Sick Leave (SL)', 'default_days' => 12]
+    ];
+
+    $result = [];
+
+    foreach ($leaveTypesData as $id => $type) {
+        // Calculate used days for this leave type for this specific employee
+        $usedDays = Leave::where('employee_id', $employeeId)
+            ->where('leave_type_id', $id)
+            ->where('leave_status', '!=', 3) // Not rejected
+            ->count();
+
+        $remainingDays = $type['default_days'] - $usedDays;
+
+        // Get date range from leave types table (if exists, otherwise use defaults)
+        $leaveTypeRecord = Leavetype::where('delete_status', 1)
+            ->where('leavetype_name_id', $id)
+            ->first();
+
+        $startDate = $leaveTypeRecord->leave_start_from ?? date('Y-m-d');
+        $endDate = $leaveTypeRecord->leave_end_to ?? date('Y-m-d', strtotime('+1 year'));
+
+        $result[] = [
+            'id' => $id,
+            'text' => $type['name'] .
+                " [{$remainingDays}/{$type['default_days']} days remaining] " .
+                "[" . date('M', strtotime($startDate)) . " - " .
+                date('M', strtotime($endDate)) . "]",
+            'leave_days' => $type['default_days'],
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'remaining_days' => $remainingDays
+        ];
+    }
+
+    return response()->json($result);
+}
     public function leaveindex()
     {
         $employees = Employee::where('delete_status', 1)
@@ -276,74 +286,191 @@ class LeaveController extends Controller
 
 
 
-    public function getLeaveData(Request $request)
-    {
-        $adminLeavesQuery = Leave::with(['employees' => function ($query) {
-            $query->with('Departmentid');
-        }, 'leavetype'])
-            ->whereHas('employees', function ($q) {
-                // Get leaves for admin employees only
-                $q->whereHas('user', function ($userQuery) {
-                    $userQuery->role('Admin');
-                });
-            })
-            ->orderBy('created_at', 'desc');
-
-        $employeeLeavesQuery = Leave::with(['employees' => function ($query) {
-            $query->with('Departmentid');
-        }, 'leavetype'])
-            ->whereHas('employees', function ($q) {
-                // Get leaves for non-admin employees
-                $q->whereDoesntHave('user', function ($userQuery) {
-                    $userQuery->role('Admin');
-                });
-            })
-            ->orderBy('created_at', 'desc');
-
-        // Apply filters to both queries
-        if ($request->has('employee') && $request->employee) {
-            $adminLeavesQuery->where('employee_id', $request->employee);
-            $employeeLeavesQuery->where('employee_id', $request->employee);
-        }
-
-        if ($request->has('department') && $request->department) {
-            $adminLeavesQuery->whereHas('employees.Departmentid', function ($q) use ($request) {
-                $q->where('dep_name', $request->department);
+   public function getLeaveData(Request $request)
+{
+    $adminLeavesQuery = Leave::with(['employees' => function ($query) {
+        $query->with('Departmentid');
+    }, 'leavetype'])
+        ->whereHas('employees', function ($q) {
+            $q->whereHas('user', function ($userQuery) {
+                $userQuery->role('Admin');
             });
-            $employeeLeavesQuery->whereHas('employees.Departmentid', function ($q) use ($request) {
-                $q->where('dep_name', $request->department);
+        })
+        ->orderBy('created_at', 'desc');
+
+    $employeeLeavesQuery = Leave::with(['employees' => function ($query) {
+        $query->with('Departmentid');
+    }, 'leavetype'])
+        ->whereHas('employees', function ($q) {
+            $q->whereDoesntHave('user', function ($userQuery) {
+                $userQuery->role('Admin');
             });
-        }
+        })
+        ->where('leave_type_id', '>', 0)
+        ->orderBy('created_at', 'desc');
 
-        if ($request->has('dateRange') && $request->dateRange) {
-            $adminLeavesQuery->where(function ($q) use ($request) {
-                $q->whereBetween('leavedate_no', [$request->dateRange['from'], $request->dateRange['to']])
-                    ->orWhereBetween('leavedaterange_from', [$request->dateRange['from'], $request->dateRange['to']])
-                    ->orWhereBetween('leavedaterange_to', [$request->dateRange['from'], $request->dateRange['to']]);
+    $absentLeavesQuery = Leave::with(['employees' => function ($query) {
+        $query->with('Departmentid');
+    }, 'leavetype'])
+        ->whereHas('employees', function ($q) {
+            $q->whereDoesntHave('user', function ($userQuery) {
+                $userQuery->role('Admin');
             });
+        })
+        ->where('leave_type_id', 0)
+        ->orderBy('created_at', 'desc');
 
-            $employeeLeavesQuery->where(function ($q) use ($request) {
-                $q->whereBetween('leavedate_no', [$request->dateRange['from'], $request->dateRange['to']])
-                    ->orWhereBetween('leavedaterange_from', [$request->dateRange['from'], $request->dateRange['to']])
-                    ->orWhereBetween('leavedaterange_to', [$request->dateRange['from'], $request->dateRange['to']]);
-            });
+    if ($request->has('employee') && $request->employee) {
+        $adminLeavesQuery->where('employee_id', $request->employee);
+        $employeeLeavesQuery->where('employee_id', $request->employee);
+        $absentLeavesQuery->where('employee_id', $request->employee);
+    }
+
+    if ($request->has('department') && $request->department) {
+        $adminLeavesQuery->whereHas('employees.Departmentid', function ($q) use ($request) {
+            $q->where('dep_name', $request->department);
+        });
+        $employeeLeavesQuery->whereHas('employees.Departmentid', function ($q) use ($request) {
+            $q->where('dep_name', $request->department);
+        });
+        $absentLeavesQuery->whereHas('employees.Departmentid', function ($q) use ($request) {
+            $q->where('dep_name', $request->department);
+        });
+    }
+
+    if ($request->has('dateRange') && $request->dateRange) {
+        $adminLeavesQuery->where(function ($q) use ($request) {
+            $q->whereBetween('leavedate_no', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_from', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_to', [$request->dateRange['from'], $request->dateRange['to']]);
+        });
+
+        $employeeLeavesQuery->where(function ($q) use ($request) {
+            $q->whereBetween('leavedate_no', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_from', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_to', [$request->dateRange['from'], $request->dateRange['to']]);
+        });
+
+        $absentLeavesQuery->where(function ($q) use ($request) {
+            $q->whereBetween('leavedate_no', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_from', [$request->dateRange['from'], $request->dateRange['to']])
+                ->orWhereBetween('leavedaterange_to', [$request->dateRange['from'], $request->dateRange['to']]);
+        });
+    }
+
+    if ($request->has('status') && $request->status) {
+        $adminLeavesQuery->where('leave_status', $request->status);
+        $employeeLeavesQuery->where('leave_status', $request->status);
+        $absentLeavesQuery->where('leave_status', $request->status);
+    }
+
+    $adminLeaves = $adminLeavesQuery->get();
+    $employeeLeaves = $employeeLeavesQuery->get();
+    $absentLeaves = $absentLeavesQuery->get();
+
+    return response()->json([
+        'success' => true,
+        'admin_leaves' => $this->processLeaves($adminLeaves),
+        'employee_leaves' => $this->processLeaves($employeeLeaves),
+        'absent_leaves' => $this->processLeaves($absentLeaves)
+    ]);
+}
+// In your LeaveController.php, update the markPresentFromAbsent method
+public function markPresentFromAbsent(Request $request)
+{
+    $request->validate([
+        'employee_id' => 'required|exists:employees,emp_id',
+        'date' => 'required|date'
+    ]);
+
+    try {
+        $employee = Employee::find($request->employee_id);
+
+        // Parse the date correctly - remove timezone if present
+        $date = Carbon::parse($request->date)->format('Y-m-d');
+
+        // Check if attendance already exists for this date
+        $attendance = Attendance::where('employee_id', $request->employee_id)
+            ->whereDate('attendancedate_no', $date)
+            ->first();
+
+        if ($attendance) {
+            // Update existing attendance to present
+            $attendance->update([
+                'attendance_type' => 1, // 1 = present
+                'half_day_type' => null,
+                'clock_in' => now()->format('H:i:s'),
+                'clock_out' => now()->format('H:i:s'),
+                'attendance_empname' => $employee->emp_id,
+                'attendance_depname' => $employee->Departmentid->dep_id ?? null,
+            ]);
+        } else {
+            // Create new attendance record
+            Attendance::create([
+                'employee_id' => $request->employee_id,
+                'attendancedate_no' => $date,
+                'attendance_type' => 1, // 1 = present
+                'clock_in' => now()->format('H:i:s'),
+                'clock_out' => now()->format('H:i:s'),
+                'attendance_empname' => $employee->emp_id,
+                'attendance_depname' => $employee->Departmentid->dep_id ?? null,
+                'attendance_loc' => $employee->Branchid->branch_id ?? null,
+                'delete_status' => 1
+            ]);
         }
-
-        if ($request->has('status') && $request->status) {
-            $adminLeavesQuery->where('leave_status', $request->status);
-            $employeeLeavesQuery->where('leave_status', $request->status);
-        }
-
-        $adminLeaves = $adminLeavesQuery->get();
-        $employeeLeaves = $employeeLeavesQuery->get();
 
         return response()->json([
             'success' => true,
-            'admin_leaves' => $this->processLeaves($adminLeaves),
-            'employee_leaves' => $this->processLeaves($employeeLeaves)
+            'message' => 'Attendance marked as present successfully'
         ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error marking attendance: ' . $e->getMessage()
+        ], 500);
+    }
+}
+public function updateLeaveType(Request $request, $id)
+{
+    $leave = Leave::find($id);
+    if (!$leave) {
+        return response()->json(['success' => false, 'message' => 'Leave not found'], 404);
     }
 
+    $request->validate([
+        'leave_type_id' => 'required|exists:leavetypes,leavetype_id',
+    ]);
+
+    try {
+        // If the leave was absent (leave_type_id = 0), also set status to approved
+        $updateData = [
+            'leave_type_id' => $request->leave_type_id,
+        ];
+
+        // If this was an absent record (leave_type_id was 0), set status to approved
+        if ($leave->leave_type_id == 0) {
+            $updateData['leave_status'] = 1; // Approved
+
+            // Also create attendance record for this approved leave
+            $employee = Employee::find($leave->employee_id);
+            if ($employee) {
+                $this->createAttendanceForLeave($leave, $employee);
+            }
+        }
+
+        $leave->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Leave type updated successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating leave type: ' . $e->getMessage()
+        ], 500);
+    }
+}
     private function processLeaves($leaves)
     {
         // Your existing grouping logic

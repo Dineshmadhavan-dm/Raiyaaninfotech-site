@@ -236,7 +236,7 @@
                             <input type="hidden" id="shiftId" name="shift_id">
                             <input type="hidden" id="shiftEmployee" name="employee_id">
                             <div class="mb-3">
-                                <label for="shiftEmployee" class="form-label">Employee</label>
+                                {{-- <label for="shiftEmployee" class="form-label">Employee</label> --}}
                                 <select id="shiftEmployee" class="form-select" disabled name="employee_id" required>
                                     @foreach ($employees as $employee)
                                         <option value="{{ $employee->emp_id }}">{{ $employee->fullname }}</option>
@@ -581,9 +581,14 @@
 
 
 
-
+<script>
+let attendanceData = @json($attendance);
+let leaveData = @json($approvedLeaves);
+</script>
 
 <script>
+
+
 
 function updateShiftTypeDropdown(type) {
     const select = document.getElementById('shiftType');
@@ -2060,24 +2065,55 @@ document.getElementById('nextHoliday').addEventListener('click', () => {
                             showToast('An error occurred while saving bulk shifts', 'error');
                         });
                 }
+function saveShift() {
 
-              function saveShift() {
+    let swapDate = document.getElementById('swapDate')?.value;
 
-  let swapDate = document.getElementById('swapDate')?.value;
-
-if (!swapDate) {
-    swapDate = null;
-}
+    if (swapDate === '' || swapDate === undefined) {
+        swapDate = null;
+    }
 
     const currentDate = document.getElementById('shiftDate').value;
     const employeeId = document.getElementById('shiftEmployee').value;
     const shiftType = document.getElementById('shiftType').value;
 
-    // 🚀 SWAP LOGIC FIRST
+    if (swapDate && swapDate === currentDate) {
+        showToast('Cannot swap same date', 'error');
+        return;
+    }
+
     if (swapDate) {
 
-        if (swapDate === currentDate) {
-            showToast('Cannot swap same date', 'error');
+        const currentShift = shifts.find(s =>
+            s.employee_id == employeeId &&
+            s.date_no === currentDate
+        );
+
+        const swapShift = shifts.find(s =>
+            s.employee_id == employeeId &&
+            s.date_no === swapDate
+        );
+
+        const currentAttendance = attendanceData.find(a =>
+            a.employee_id == employeeId &&
+            a.attendancedate_no === currentDate
+        );
+
+        const swapAttendance = attendanceData.find(a =>
+            a.employee_id == employeeId &&
+            a.attendancedate_no === swapDate
+        );
+
+        const isAbsent =
+            (currentAttendance && currentAttendance.attendance_type == 0) ||
+            (swapAttendance && swapAttendance.attendance_type == 0);
+
+        const isLeave =
+            (leaveData?.[employeeId]?.[currentDate]) ||
+            (leaveData?.[employeeId]?.[swapDate]);
+
+        if (isAbsent || isLeave) {
+            showToast('Leave / Absent cannot be swapped', 'error');
             return;
         }
 
@@ -2088,18 +2124,17 @@ if (!swapDate) {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json',
             },
-           body: JSON.stringify({
-    employee_id: employeeId,
-    date_no: currentDate,
-    swap_date: swapDate,
-    shift_type: shiftType
-})
+            body: JSON.stringify({
+                employee_id: employeeId,
+                date_no: currentDate,
+                swap_date: swapDate,
+                shift_type: shiftType
+            })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                 document.getElementById('swapDate').value = ''; // 🔥 ADD THIS
-
+                document.getElementById('swapDate').value = '';
                 fetchShifts();
                 shiftModal.hide();
                 showToast('Shift swapped successfully', 'success');
@@ -2112,12 +2147,8 @@ if (!swapDate) {
             showToast('Swap error', 'error');
         });
 
-        return; // ❗ STOP normal save
+        return;
     }
-
-    // ============================
-    // 👇 YOUR EXISTING CODE (UNCHANGED)
-    // ============================
 
     const shiftId = document.getElementById('shiftId').value;
     const formData = new FormData(document.getElementById('shiftForm'));
@@ -2174,11 +2205,6 @@ if (!swapDate) {
         showToast(errorMessage, 'error');
     });
 }
-
-
-
-
-
                 function confirmDeleteShift() {
                     const shiftId = document.getElementById('shiftId').value;
 

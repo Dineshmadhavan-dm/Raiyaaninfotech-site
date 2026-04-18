@@ -93,22 +93,37 @@
                                         {{ $m->status }}
                                     </span>
                                 </td>
-                                <td>{{ $m->cost ?? '-' }}</td>
-                                <td>{{ $m->start_date }}</td>
+                              <td>
+    {{ $m->cost ? '₹ '.number_format($m->cost, 0, '.', ',') : '-' }}
+</td>
+
+<td>
+    {{ $m->start_date ? \Carbon\Carbon::parse($m->start_date)->format('d-m-Y') : '-' }}
+</td>
 
                                 <td class="">
-                                    <button class="btn btn-sm btn-info view-btn"
-                                            data-item="{{ $m->item->item_name ?? '-' }}"
-                                            data-type="{{ $m->maintenance_type }}"
-                                            data-desc="{{ $m->issue_description }}"
-                                            data-status="{{ $m->status }}"
-                                            data-cost="{{ $m->cost }}"
-                                            data-vendor="{{ $m->vendor_name }}"
-                                            data-date="{{ $m->start_date }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#viewModal">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
+                                  <button class="btn btn-sm btn-info view-btn"
+
+    data-item="{{ $m->item->item_name ?? '-' }}"
+    data-image="{{ asset('inventory_images/'.$m->item->item_image) }}"
+
+    data-type="{{ $m->maintenance_type }}"
+    data-desc="{{ $m->issue_description }}"
+    data-status="{{ $m->status }}"
+
+    data-cost="{{ number_format($m->cost,0,'.',',') }}"
+    data-vendor="{{ $m->vendor_name }}"
+
+    data-date="{{ $m->start_date ? \Carbon\Carbon::parse($m->start_date)->format('d-m-Y') : '' }}"
+    data-end="{{ $m->end_date ? \Carbon\Carbon::parse($m->end_date)->format('d-m-Y') : '' }}"
+
+    data-remarks="{{ $m->remarks }}"
+
+    data-bs-toggle="modal"
+    data-bs-target="#billModal">
+
+    <i class="bi bi-eye"></i>
+</button>
 
                                     @if($m->status == 'pending')
                                     <button class="btn btn-sm btn-success complete-btn"
@@ -141,40 +156,114 @@
     </div>
 
     <!-- VIEW MODAL -->
-    <div class="modal fade" id="viewModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
+<div class="modal fade" id="billModal">
+<div class="modal-dialog modal-xl">
+<div class="modal-content border-0 shadow-lg rounded-4 p-4">
 
-                <div class="modal-header">
-                    <h5>Maintenance Details</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p><b>Item:</b> <span id="v_item"></span></p>
-                    <p><b>Type:</b> <span id="v_type"></span></p>
-                    <p><b>Description:</b> <span id="v_desc"></span></p>
-                    <p><b>Status:</b> <span id="v_status"></span></p>
-                    <p><b>Cost:</b> <span id="v_cost"></span></p>
-                    <p><b>Vendor:</b> <span id="v_vendor"></span></p>
-                    <p><b>Date:</b> <span id="v_date"></span></p>
-                </div>
-
-            </div>
-        </div>
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">Maintenance Invoice</h4>
+        <small class="text-muted">Inventory Maintenance</small>
     </div>
+    <span class="badge px-3 py-2" id="b_status"></span>
+</div>
+
+<div class="row">
+
+<!-- LEFT -->
+<div class="col-md-8">
+
+    <!-- ITEM -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+        <h6 class="fw-bold text-primary">Item Info</h6>
+        <p><b>Item:</b> <span id="b_item"></span></p>
+        <p><b>Type:</b> <span id="b_type"></span></p>
+    </div>
+
+    <!-- DETAILS -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+        <h6 class="fw-bold text-primary">Maintenance Details</h6>
+
+        <p><b>Issue:</b> <span id="b_desc"></span></p>
+        <p><b>Vendor:</b> <span id="b_vendor"></span></p>
+    </div>
+
+    <!-- DATES -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+        <h6 class="fw-bold text-primary">Dates</h6>
+
+        <p><b>Start:</b> <span id="b_date"></span></p>
+        <p><b>End:</b> <span id="b_end"></span></p>
+    </div>
+
+    <!-- REMARKS -->
+    <div class="card border-0 shadow-sm rounded-4 p-3">
+        <h6 class="fw-bold text-primary">Remarks</h6>
+        <p id="b_remarks"></p>
+    </div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="col-md-4">
+
+    <!-- IMAGE -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 text-center">
+        <h6 class="fw-bold text-primary">Item Image</h6>
+        <img id="b_image" class="img-fluid rounded-3" style="max-height:200px; object-fit:cover;">
+    </div>
+
+    <!-- COST -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-light">
+        <h6 class="fw-bold text-primary">Total Cost</h6>
+        <h3>₹ <span id="b_cost"></span></h3>
+    </div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="text-end mt-4">
+    <button onclick="window.print()" class="btn btn-success">
+        🖨 Print
+    </button>
+</div>
+
+</div>
+</div>
+</div>
 
     <script>
         // VIEW
-        $(document).on('click','.view-btn',function(){
-            $('#v_item').text($(this).data('item'));
-            $('#v_type').text($(this).data('type'));
-            $('#v_desc').text($(this).data('desc'));
-            $('#v_status').text($(this).data('status'));
-            $('#v_cost').text($(this).data('cost'));
-            $('#v_vendor').text($(this).data('vendor'));
-            $('#v_date').text($(this).data('date'));
-        });
+       $(document).on('click','.view-btn',function(){
+
+    $('#b_item').text($(this).data('item'));
+    $('#b_type').text($(this).data('type'));
+    $('#b_desc').text($(this).data('desc'));
+    $('#b_vendor').text($(this).data('vendor'));
+
+    $('#b_date').text($(this).data('date'));
+    $('#b_end').text($(this).data('end') || 'Not Completed');
+
+    $('#b_cost').text($(this).data('cost'));
+
+    $('#b_remarks').text($(this).data('remarks') || '-');
+
+    $('#b_image').attr('src', $(this).data('image'));
+
+    let status = $(this).data('status');
+
+    $('#b_status').text(status);
+
+    if(status === 'completed'){
+        $('#b_status').removeClass().addClass('badge bg-success px-3 py-2');
+    }else{
+        $('#b_status').removeClass().addClass('badge bg-warning px-3 py-2');
+    }
+
+});
 
         // COMPLETE
       $(document).on('click','.complete-btn',function(){

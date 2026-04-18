@@ -319,7 +319,7 @@
                                         <option value="1">Present</option>
                                         <option value="2">Late</option>
                                         <option value="3">Half Day</option>
-                                        <option value="0">Absent</option>
+
                                     </select>
                                 </div>
                             </div>
@@ -462,6 +462,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const clockOutInput = document.getElementById(prefix + 'CheckOutTime');
 
         shiftTimes = getShiftTimes(selectedEmployee.emp_id, selectedDate);
+
+        const shiftData = shifts[selectedEmployee.emp_id] && shifts[selectedEmployee.emp_id][selectedDate];
+const isSwapped = shiftData && shiftData.is_swaped == 1;
+
+if (isSwapped) {
+    const select = document.getElementById(prefix + 'AttendanceStatus');
+
+    if (select.value === '3') {
+        // 🚫 Prevent Half Day
+        select.value = '1';
+        return;
+    }
+}
 
         const now = new Date();
         const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -717,6 +730,30 @@ function setHalfDayTimes(prefix, halfDayType) {
 
         addClockInPicker.setDate(formatTimeForDisplay(currentTime));
         addClockOutPicker.setDate(formatTimeForDisplay(shiftTimes.to));
+
+
+        const shiftData = shifts[employee.emp_id] && shifts[employee.emp_id][dateString];
+const isSwapped = shiftData && shiftData.is_swaped == 1;
+
+const attendanceSelect = document.getElementById('addAttendanceStatus');
+const halfDayOption = attendanceSelect.querySelector('option[value="3"]');
+
+if (isSwapped) {
+    // 🚫 Hide Half Day option
+    if (halfDayOption) {
+        halfDayOption.style.display = 'none';
+        halfDayOption.disabled = true;
+    }
+
+    // Force Present
+    attendanceSelect.value = '1';
+} else {
+    // ✅ Show Half Day
+    if (halfDayOption) {
+        halfDayOption.style.display = 'block';
+        halfDayOption.disabled = false;
+    }
+}
 
         fetch('/get-ip-address')
             .then(response => response.json())
