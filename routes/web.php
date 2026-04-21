@@ -31,6 +31,7 @@ Route::group(['middleware' => ['auth']], routes: function () {
         require __DIR__ . '/Dashboard/Employee/Empkanbanboard.php';
         require __DIR__ . '/Dashboard/Employee/Applyleave.php';
         require __DIR__ . '/Dashboard/Employee/Holiday.php';
+        require __DIR__ . '/Dashboard/Employee/Accessories.php';
     });
 
 

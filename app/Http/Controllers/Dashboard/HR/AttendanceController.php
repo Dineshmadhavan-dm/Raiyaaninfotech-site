@@ -17,6 +17,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AttendanceExport;
 use App\Imports\AttendanceImport;
 use App\Models\Leave;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class AttendanceController extends Controller
 {
@@ -37,6 +39,11 @@ class AttendanceController extends Controller
 
 
 }
+
+
+
+
+
 
    public function attendlist()
 {
@@ -555,212 +562,7 @@ $attendanceLocation = $this->getLocationFromIp($clockInIp)
 
 
 
-public function export(Request $request)
-{
-    // ✅ FILTER EMPLOYEES
-    $employees = Employee::where('delete_status', 1)
-        ->with(['Departmentid'])
 
-        ->when($request->department && $request->department != 'all', function ($q) use ($request) {
-            $q->whereHas('Departmentid', function ($qq) use ($request) {
-                $qq->where('dep_name', $request->department);
-            });
-        })
-->when($request->employee_id, function ($q) use ($request) {
-
-    if (is_array($request->employee_id)) {
-
-        if (in_array('all', $request->employee_id)) {
-            return; // skip filter = all employees
-        }
-
-        $q->whereIn('emp_id', $request->employee_id);
-
-    } elseif ($request->employee_id != 'all') {
-        $q->where('emp_id', $request->employee_id);
-    }
-})
-
-        ->get();
-
-    // ✅ DATE FILTER
-    $dates = [];
-
-    if ($request->start_date && $request->end_date) {
-
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end = Carbon::parse($request->end_date)->endOfDay();
-
-        while ($start->lte($end)) {
-            $dates[] = $start->format('Y-m-d');
-            $start->addDay();
-        }
-
-    } elseif ($request->month) {
-
-        $month = Carbon::parse($request->month);
-
-        for ($i = 1; $i <= $month->daysInMonth; $i++) {
-            $dates[] = $month->copy()->day($i)->format('Y-m-d');
-        }
-    }
-
-    if (empty($dates)) {
-        $dates[] = now()->format('Y-m-d');
-    }
-
-    // ✅ DATE RANGE FOR QUERY (IMPORTANT)
-    $startDate = min($dates);
-    $endDate = max($dates);
-
-    // ✅ ATTENDANCE (FIXED)
-    $attendances = Attendance::where('delete_status', 1)
-        ->whereDate('attendancedate_no', '>=', $startDate)
-        ->whereDate('attendancedate_no', '<=', $endDate)
-        ->get()
-        ->keyBy(fn($item) =>
-            $item->employee_id . '_' . Carbon::parse($item->attendancedate_no)->format('Y-m-d')
-        );
-
-    // ✅ SHIFT (FIXED)
-    $shifts = Shift::where('delete_status', 1)
-        ->whereDate('date_no', '>=', $startDate)
-        ->whereDate('date_no', '<=', $endDate)
-        ->get()
-        ->keyBy(fn($item) =>
-            $item->employee_id . '_' . Carbon::parse($item->date_no)->format('Y-m-d')
-        );
-
-
-    // ✅ LEAVE (FIXED)
-    $leaves = Leave::where('delete_status', 1)
-        ->where('leave_status', 1)
-        ->whereDate('leavedate_no', '>=', $startDate)
-        ->whereDate('leavedate_no', '<=', $endDate)
-        ->get()
-        ->keyBy(fn($item) =>
-            $item->employee_id . '_' . Carbon::parse($item->leavedate_no)->format('Y-m-d')
-        );
-
-    $data = [];
-
-  foreach ($employees as $employee) {
-
-    // ✅ COUNT INIT
-    $summary = [
-        'present' => 0,
-        'late' => 0,
-        'halfday' => 0,
-        'absent' => 0,
-        'holiday' => 0,
-        'dayoff' => 0,
-        'leave' => 0,
-    ];
-
-    foreach ($dates as $date) {
-
-        $date = Carbon::parse($date)->format('Y-m-d');
-
-        $key = $employee->emp_id . '_' . $date;
-
-        $attendance = $attendances[$key] ?? null;
-        $shift = $shifts[$key] ?? null;
-// ✅ Holiday from shift
-$isHoliday = $shift && $shift->shift_type == 4;
-        $leave = $leaves[$key] ?? null;
-
-        if (!$attendance && !$leave && !$isHoliday && !$shift) {
-            continue;
-        }
-
-        // STATUS + COUNT
-        if ($isHoliday) {
-            $status = 'Holiday';
-            $summary['holiday']++;
-
-        } elseif ($shift && $shift->shift_type == 3) {
-            $status = 'Day Off';
-            $summary['dayoff']++;
-
-        } elseif ($leave) {
-            $status = ($leave->select_duration == 2) ? 'Half Leave' : 'Leave';
-            $summary['leave']++;
-
-        } elseif ($attendance) {
-
-            switch ($attendance->attendance_type) {
-                case 1:
-                    $status = 'Present';
-                    $summary['present']++;
-                    break;
-
-                case 2:
-                    $status = 'Late';
-                    $summary['late']++;
-                    break;
-
-                case 3:
-                    $status = 'Half Day';
-                    $summary['halfday']++;
-                    break;
-
-                default:
-                    $status = 'Absent';
-                    $summary['absent']++;
-            }
-
-        } else {
-            continue;
-        }
-
-        // Work hours
-        $workHours = '';
-        if ($attendance && $attendance->clock_in && $attendance->clock_out) {
-            $startTime = Carbon::parse($attendance->clock_in);
-            $endTime = Carbon::parse($attendance->clock_out);
-            $diff = $startTime->diff($endTime);
-            $workHours = "{$diff->h}h {$diff->i}m";
-        }
-
-        $data[] = [
-            'emp_code' => $employee->employee_id,
-            'name' => $employee->fullname,
-            'dept' => $employee->Departmentid->dep_name ?? '',
-            'date' => $date,
-            'clock_in' => $attendance->clock_in ?? '',
-            'clock_out' => $attendance->clock_out ?? '',
-            'work_hrs' => $workHours,
-            'status' => $status,
-        ];
-    }
-
-    // ✅ TOTAL DAYS
-    $totalDays =
-        $summary['present'] +
-        $summary['late'] +
-        $summary['halfday'] +
-        $summary['absent'] +
-        $summary['holiday'] +
-        $summary['dayoff'] +
-        $summary['leave'];
-
-    // ✅ ADD TOTAL ROW
-    $data[] = [
-        'emp_code' => '',
-        'name' => 'TOTAL',
-        'dept' => '',
-        'date' => '',
-        'clock_in' => '',
-        'clock_out' => '',
-        'work_hrs' => '',
-        'status' =>
-            "Present:{$summary['present']} | Late:{$summary['late']} | Halfday:{$summary['halfday']} | " .
-            "Absent:{$summary['absent']} | Leave:{$summary['leave']} | Holiday:{$summary['holiday']} | Dayoff:{$summary['dayoff']} | TOTAL:{$totalDays}",
-    ];
-}
-
-    return Excel::download(new AttendanceExport($data), 'attendance_report.xlsx');
-}
 
 private function getLocationFromIp($ip)
 {
@@ -790,4 +592,263 @@ private function getLocationFromIp($ip)
     return null;
 }
 
+
+
+
+
+public function exportPdf(Request $request)
+{
+    // Fix: Properly handle employee_id array from query string
+    $employeeIds = $request->input('employee_id');
+
+    // If employee_id is a string (single value), convert to array
+    if (is_string($employeeIds)) {
+        $employeeIds = [$employeeIds];
+    }
+
+    // Filter employees - FIXED: Use correct relationship name 'Designationid'
+    $employees = Employee::where('delete_status', 1)
+        ->with(['Departmentid', 'Designationid'])  // Changed from 'designation' to 'Designationid'
+        ->when($request->department && $request->department != 'all', function ($q) use ($request) {
+            $q->whereHas('Departmentid', function ($qq) use ($request) {
+                $qq->where('dep_name', $request->department);
+            });
+        })
+        ->when($employeeIds && !in_array('all', $employeeIds), function ($q) use ($employeeIds) {
+            $q->whereIn('emp_id', $employeeIds);
+        })
+        ->get();
+
+    // Date range logic
+    $dates = [];
+    $reportTitle = '';
+    $reportPeriod = '';
+    $totalDays = 0;
+
+    if ($request->start_date && $request->end_date) {
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
+
+        while ($start->lte($end)) {
+            $dates[] = $start->format('Y-m-d');
+            $start->addDay();
+        }
+
+        $reportTitle = "Attendance Report";
+        $reportPeriod = Carbon::parse($request->start_date)->format('d-m-Y') . ' To ' .
+                       Carbon::parse($request->end_date)->format('d-m-Y');
+        $totalDays = count($dates);
+    } elseif ($request->month) {
+        $month = Carbon::parse($request->month);
+        $daysInMonth = $month->daysInMonth;
+
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $dates[] = $month->copy()->day($i)->format('Y-m-d');
+        }
+
+        $reportTitle = "Attendance Report - " . $month->format('F Y');
+        $reportPeriod = $month->format('F Y');
+        $totalDays = $daysInMonth;
+    } else {
+        $month = Carbon::now();
+        $daysInMonth = $month->daysInMonth;
+
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $dates[] = $month->copy()->day($i)->format('Y-m-d');
+        }
+
+        $reportTitle = "Attendance Report - " . $month->format('F Y');
+        $reportPeriod = $month->format('F Y');
+        $totalDays = $daysInMonth;
+    }
+
+    if (empty($dates)) {
+        $dates[] = now()->format('Y-m-d');
+    }
+
+    $startDate = min($dates);
+    $endDate = max($dates);
+
+    // Fetch attendances
+    $attendances = Attendance::where('delete_status', 1)
+        ->whereDate('attendancedate_no', '>=', $startDate)
+        ->whereDate('attendancedate_no', '<=', $endDate)
+        ->get()
+        ->keyBy(fn($item) => $item->employee_id . '_' . Carbon::parse($item->attendancedate_no)->format('Y-m-d'));
+
+    // Fetch shifts
+    $shifts = Shift::where('delete_status', 1)
+        ->whereDate('date_no', '>=', $startDate)
+        ->whereDate('date_no', '<=', $endDate)
+        ->get()
+        ->keyBy(fn($item) => $item->employee_id . '_' . Carbon::parse($item->date_no)->format('Y-m-d'));
+
+    // Fetch approved leaves
+    $leaves = Leave::where('delete_status', 1)
+        ->where('leave_status', 1)
+        ->whereDate('leavedate_no', '>=', $startDate)
+        ->whereDate('leavedate_no', '<=', $endDate)
+        ->with('leavetype')
+        ->get();
+
+    // Create leave lookup array
+    $leaveLookup = [];
+    foreach ($leaves as $leave) {
+        $leaveDate = Carbon::parse($leave->leavedate_no)->format('Y-m-d');
+        $key = $leave->employee_id . '_' . $leaveDate;
+        $leaveLookup[$key] = $leave;
+    }
+
+    // Prepare monthly data
+    $monthlyData = [];
+    $reportGeneratedDate = Carbon::now()->format('d-m-Y H:i:s');
+    $departmentName = $request->department && $request->department != 'all' ? $request->department : 'All Departments';
+
+    foreach ($employees as $employee) {
+        // Group dates by month
+        $datesByMonth = [];
+        foreach ($dates as $date) {
+            $monthKey = Carbon::parse($date)->format('F Y');
+            $monthNumber = Carbon::parse($date)->format('m');
+            $year = Carbon::parse($date)->format('Y');
+
+            if (!isset($datesByMonth[$monthKey])) {
+                $datesByMonth[$monthKey] = [
+                    'month_name' => $monthKey,
+                    'month_number' => $monthNumber,
+                    'year' => $year,
+                    'days_in_month' => Carbon::parse($date)->daysInMonth,
+                    'total_days_in_range' => 0,
+                    'dates' => []
+                ];
+            }
+            $datesByMonth[$monthKey]['dates'][] = $date;
+            $datesByMonth[$monthKey]['total_days_in_range']++;
+        }
+
+        $employeeMonthlyData = [];
+
+        foreach ($datesByMonth as $monthKey => $monthInfo) {
+            $monthlySummary = [
+                'present' => 0,
+                'late' => 0,
+                'absent' => 0,
+                'holiday' => 0,
+                'dayoff' => 0,
+                'privilege_leave' => 0,
+                'casual_leave' => 0,
+                'sick_leave' => 0,
+                'total_working_days' => 0
+            ];
+
+            foreach ($monthInfo['dates'] as $date) {
+                $key = $employee->emp_id . '_' . $date;
+
+                $attendance = $attendances[$key] ?? null;
+                $shift = $shifts[$key] ?? null;
+                $leaveRecord = $leaveLookup[$key] ?? null;
+
+                $isHoliday = $shift && $shift->shift_type == 4;
+                $isDayOff = $shift && $shift->shift_type == 3;
+
+                if ($isHoliday) {
+                    $monthlySummary['holiday']++;
+                } elseif ($isDayOff) {
+                    $monthlySummary['dayoff']++;
+                } elseif ($leaveRecord) {
+                    $isHalfDayLeave = in_array($leaveRecord->select_duration, [3, 4]);
+
+                    if (!$isHalfDayLeave) {
+                        $leaveTypeId = (int)$leaveRecord->leave_type_id;
+
+                        if ($leaveTypeId == 1) {
+                            $monthlySummary['privilege_leave']++;
+                        } elseif ($leaveTypeId == 2) {
+                            $monthlySummary['casual_leave']++;
+                        } elseif ($leaveTypeId == 3) {
+                            $monthlySummary['sick_leave']++;
+                        }
+                    }
+                } elseif ($attendance) {
+                    switch ($attendance->attendance_type) {
+                        case 1:
+                            $monthlySummary['present']++;
+                            break;
+                        case 2:
+                            $monthlySummary['late']++;
+                            break;
+                        case 0:
+                            $monthlySummary['absent']++;
+                            break;
+                    }
+                } else {
+                    if ($shift && !$isHoliday && !$isDayOff && !$leaveRecord) {
+                        $monthlySummary['absent']++;
+                    }
+                }
+            }
+
+            $employeeMonthlyData[] = [
+                'month' => $monthKey,
+                'month_year' => Carbon::parse($monthInfo['dates'][0])->format('M - Y'),
+                'days_in_month' => $monthInfo['days_in_month'],
+                'total_days_in_range' => $monthInfo['total_days_in_range'],
+                'summary' => $monthlySummary
+            ];
+        }
+
+        $monthlyData[] = [
+            'employee' => $employee,
+            'months' => $employeeMonthlyData
+        ];
+    }
+
+    $totalEmployees = count($employees);
+
+    // Get company logo from settings
+    $companyLogo = null;
+    $companyName = 'RAIYAAN INFOTECH';
+    $settings = \App\Models\Setting::first();
+
+    if ($settings) {
+        if ($settings->webname) {
+            $companyName = $settings->webname;
+        }
+
+        if ($settings->weblogo) {
+            $logoPath = public_path('weblogo/' . $settings->weblogo);
+            if (file_exists($logoPath)) {
+                $logoData = file_get_contents($logoPath);
+                $mimeType = mime_content_type($logoPath);
+                $companyLogo = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
+            }
+        }
+    }
+
+    $data = [
+        'title' => $reportTitle,
+        'report_period' => $reportPeriod,
+        'report_generated_date' => $reportGeneratedDate,
+        'department_name' => $departmentName,
+        'total_days' => $totalDays,
+        'monthly_data' => $monthlyData,
+        'total_employees' => $totalEmployees,
+        'start_date' => Carbon::parse($startDate)->format('d-m-Y'),
+        'end_date' => Carbon::parse($endDate)->format('d-m-Y'),
+        'date_range_days' => Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1,
+        'company_logo' => $companyLogo,
+        'company_name' => $companyName,
+    ];
+
+    $pdf = Pdf::loadView('dashboard.hr.attendance.export-pdf', $data);
+    $pdf->setPaper('A4', 'portrait');
+
+    $pdf->setOptions([
+        'defaultFont' => 'DejaVu Sans',
+        'isHtml5ParserEnabled' => true,
+        'isRemoteEnabled' => true,
+    ]);
+
+    return $pdf->download('attendance_report_' . Carbon::now()->format('Ymd_His') . '.pdf');
+}
 }

@@ -415,6 +415,18 @@
 
 
 
+                            @can('inventory->accessories view')
+    @if (auth()->user()->categorie == 2)
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('accessories.index') ? 'active' : '' }}"
+                href="{{ route('accessories.index') }}" data-tooltip="Accessories">
+                <i class="bi bi-box-seam"></i>
+                <span>Accessories</span>
+            </a>
+        </li>
+    @endif
+@endcan
+
 
                             @if (auth()->user()->can('login') || auth()->user()->can('login->email view'))
                                 <li class="nav-item mt-1">

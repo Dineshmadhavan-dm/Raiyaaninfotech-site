@@ -11,5 +11,6 @@ Route::put('attendances/update', [AttendanceController::class, 'attend_update'])
 Route::delete('attendances/delete/{id}', [AttendanceController::class, 'attend_delete'])->name('attendance.delete');
 
 Route::get('attendances/export-template', [AttendanceController::class, 'downloadTemplate'])->name('attendances.exportTemplate');
-Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
 Route::post('attendances/import', [AttendanceController::class, 'import'])->name('attendances.import');
+
+Route::get('attendances/export-pdf', [AttendanceController::class, 'exportPdf'])->name('attendances.export-pdf');

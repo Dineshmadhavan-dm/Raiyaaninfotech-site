@@ -1000,22 +1000,22 @@
 
 
 
- <!-- Export Attendance Modal - Using Same Date Range & Month Pickers as Bulk Modal -->
+<!-- Export Attendance Modal - PDF Only -->
 <div class="modal fade" id="exportAttendanceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Export Attendance</h5>
+                <h5 class="modal-title">Export Attendance Report (PDF)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Export Type - Multiple / Month -->
+                <!-- Export Type - Multiple / Month (for PDF) -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Export Type</label>
+                    <label class="form-label fw-bold">Report Period</label>
                     <div class="d-flex gap-4 mt-2">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="export_type" id="exportMultipleRadio" value="multiple" checked>
-                            <label class="form-check-label" for="exportMultipleRadio">Multiple</label>
+                            <label class="form-check-label" for="exportMultipleRadio">Date Range</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="export_type" id="exportMonthRadioBtn" value="month">
@@ -1029,19 +1029,14 @@
                     <label class="form-label fw-bold">Departments</label>
                     <div class="dropdown w-100">
                         <button class="form-select text-start" type="button" id="exportDeptDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: white; text-align: left;">
-                            <span id="exportDeptText" >All Departments</span>
+                            <span id="exportDeptText">All Departments</span>
                         </button>
                         <ul class="dropdown-menu p-2 w-100" aria-labelledby="exportDeptDropdownBtn" style="max-height: 300px; overflow-y: auto;">
                             <li>
                                 <input type="text" class="form-control form-control-sm mb-2" placeholder="Search departments..." id="exportDeptSearchInput">
                             </li>
-                            <li class="d-flex justify-content-between px-2 mb-2" style="display: none;">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="exportSelectAllDeptBtn">Select All</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportDeselectAllDeptBtn">Deselect All</button>
-                            </li>
                             <li>
-                                <select id="exportDeptSelectList" class="form-select form-select-sm" size="6"  style="border: none;">
-
+                                <select id="exportDeptSelectList" class="form-select form-select-sm" size="6" style="border: none;">
                                     @foreach ($departments as $department)
                                         <option value="{{ $department->dep_name }}">{{ $department->dep_name }}</option>
                                     @endforeach
@@ -1080,7 +1075,7 @@
                     </div>
                 </div>
 
-                <!-- Date Range Fields (SAME AS BULK MODAL) -->
+                <!-- Date Range Fields -->
                 <div class="mb-3" id="exportDateRangeDiv">
                     <label for="exportSelectedDateRange" class="form-label fw-bold">Date Range</label>
                     <p id="exportOpenDateRangePicker">
@@ -1090,7 +1085,6 @@
                     <input type="hidden" id="export_date_range_from" name="export_attenddaterange_from">
                     <input type="hidden" id="export_date_range_to" name="export_attenddaterange_to">
 
-                    <!-- Date Range Picker Container (SAME AS BULK MODAL) -->
                     <div class="date-range-picker-container mt-2 d-none" id="exportDateRangePickerContainer">
                         <span id="exportDateRangeDisplay" style="display: none;"></span>
                         <div class="date-range-calendar">
@@ -1126,7 +1120,7 @@
                     </div>
                 </div>
 
-                <!-- Month Field (SAME AS BULK MODAL) -->
+                <!-- Month Field -->
                 <div class="mb-3 d-none" id="exportMonthDiv">
                     <label for="exportMonthYearPicker" class="form-label fw-bold">Month-Year</label>
                     <input type="text" id="exportMonthYearPicker" class="form-control" name="export_month_year" placeholder="Select month">
@@ -1134,13 +1128,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="exportFinalConfirmBtn">Export</button>
+                <button type="button" class="btn btn-primary" id="exportFinalConfirmBtn">Generate PDF</button>
             </div>
         </div>
     </div>
 </div>
 <script>
-// Open export modal - FIXED
+// Open export modal
 document.getElementById('exportAttendance').addEventListener('click', function (e) {
     e.preventDefault();
     const exportModal = new bootstrap.Modal(document.getElementById('exportAttendanceModal'));
@@ -4670,9 +4664,11 @@ if (isSwapped) {
             color: white;
         }
     </style>
+
+
 <script>
 // ============================================
-// COMPLETE EXPORT MODAL INITIALIZATION
+// PDF EXPORT MODAL INITIALIZATION ONLY
 // ============================================
 (function() {
     if (document.readyState === 'loading') {
@@ -4703,6 +4699,7 @@ if (isSwapped) {
             });
         }
 
+        // Month picker initialization
         let exportMonthPicker = null;
         const exportMonthInput = document.getElementById('exportMonthYearPicker');
 
@@ -4725,6 +4722,7 @@ if (isSwapped) {
             });
         }
 
+        // Date Range Picker Class
         class ExportDateRangePicker {
             constructor() {
                 this.currentDate = new Date();
@@ -4954,12 +4952,12 @@ if (isSwapped) {
             exportDateRangePicker = new ExportDateRangePicker();
         }
 
+        // Department dropdown elements
         const exportDeptSelect = document.getElementById('exportDeptSelectList');
         const exportDeptText = document.getElementById('exportDeptText');
         const exportDeptSearch = document.getElementById('exportDeptSearchInput');
-        const exportSelectAllDept = document.getElementById('exportSelectAllDeptBtn');
-        const exportDeselectAllDept = document.getElementById('exportDeselectAllDeptBtn');
 
+        // Employee dropdown elements
         const exportEmpSelect = document.getElementById('exportEmpSelectList');
         const exportEmpText = document.getElementById('exportEmpText');
         const exportEmpSearch = document.getElementById('exportEmpSearchInput');
@@ -5020,9 +5018,6 @@ if (isSwapped) {
                 }
             });
         }
-
-        if (exportSelectAllDept) exportSelectAllDept.style.display = 'none';
-        if (exportDeselectAllDept) exportDeselectAllDept.style.display = 'none';
 
         if (exportDeptSelect) {
             exportDeptSelect.addEventListener('change', function() {
@@ -5086,37 +5081,33 @@ if (isSwapped) {
             exportEmpSelect.addEventListener('change', updateExportEmpText);
         }
 
+        // PDF Export Handler
         if (exportConfirmBtn) {
             const newConfirmBtn = exportConfirmBtn.cloneNode(true);
             exportConfirmBtn.parentNode.replaceChild(newConfirmBtn, exportConfirmBtn);
 
             newConfirmBtn.addEventListener('click', function() {
                 const exportType = document.querySelector('input[name="export_type"]:checked').value;
-                const entriesPerPage = document.getElementById('entriesPerPage')?.value || 25;
                 let params = new URLSearchParams();
 
+                // Department filter
                 const selectedDept = exportDeptSelect.value;
                 if (selectedDept && selectedDept !== 'all') {
                     params.append('department', selectedDept);
                 }
 
-        let selectedEmps = Array.from(exportEmpSelect.selectedOptions)
-    .map(opt => opt.value);
+                // Employee filter
+                let selectedEmps = Array.from(exportEmpSelect.selectedOptions).map(opt => opt.value);
+                if (selectedEmps.includes('all')) {
+                    selectedEmps = [];
+                }
+                if (selectedEmps.length > 0) {
+                    selectedEmps.forEach(id => {
+                        params.append('employee_id[]', id);
+                    });
+                }
 
-// FIX "all"
-if (selectedEmps.includes('all')) {
-    selectedEmps = [];
-}
-
-// SEND ARRAY
-if (selectedEmps.length > 0) {
-    selectedEmps.forEach(id => {
-        params.append('employee_id[]', id);
-    });
-}
-
-                params.append('count', entriesPerPage);
-
+                // Date/Period filter
                 if (exportType === 'multiple') {
                     const startDate = document.getElementById('export_date_range_from')?.value;
                     const endDate = document.getElementById('export_date_range_to')?.value;
@@ -5154,10 +5145,12 @@ if (selectedEmps.length > 0) {
                 const exportModal = bootstrap.Modal.getInstance(document.getElementById('exportAttendanceModal'));
                 if (exportModal) exportModal.hide();
 
-                window.location.href = "{{ route('attendances.export') }}?" + params.toString();
+                // PDF Download - Direct to PDF export route
+                window.location.href = "{{ route('attendances.export-pdf') }}?" + params.toString();
             });
         }
 
+        // Modal show event - reset form
         const exportModalElement = document.getElementById('exportAttendanceModal');
         if (exportModalElement) {
             exportModalElement.addEventListener('show.bs.modal', function() {

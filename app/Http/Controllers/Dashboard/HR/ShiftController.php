@@ -34,15 +34,7 @@ public function __construct()
 }
 
 
-public function upcomingHolidays()
-{
-    return Shift::where('shift_type', 4)
-        ->where('date_no', '>=', now()->format('Y-m-d'))
-        ->orderBy('date_no', 'asc')
-        ->select('date_no as date', 'occasion')
-        ->distinct()
-        ->get();
-}
+
 
     public function shiftindex()
     {
@@ -145,201 +137,7 @@ $attendance = Attendance::select('employee_id','attendancedate_no','attendance_t
         };
     }
 
-public function create(Request $request)
-{
-    $request->validate([
-        'employee_id' => 'required|exists:employees,emp_id',
-        'date_no' => 'required|date_format:Y-m-d',
-        'shift_type' => 'required',
-    ]);
 
-    try {
-        DB::beginTransaction();
-
-        $date = $request->date_no;
-        $swapDate = $request->swap_date;
-
-        if (!empty($swapDate)) {
-
-            if ($swapDate == $date) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot swap same date'
-                ], 422);
-            }
-
-            $currentShift = Shift::where('employee_id', $request->employee_id)
-                ->where('date_no', $date)
-                ->first();
-
-            $swapShift = Shift::where('employee_id', $request->employee_id)
-                ->where('date_no', $swapDate)
-                ->first();
-
-            if (!$currentShift || !$swapShift) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Shift not found for selected dates'
-                ], 422);
-            }
-
-$attendanceCurrent = DB::table('attendances')
-    ->where('employee_id', $request->employee_id)
-    ->where('attendancedate_no', $date)
-    ->first();
-
-$attendanceSwap = DB::table('attendances')
-    ->where('employee_id', $request->employee_id)
-    ->where('attendancedate_no', $swapDate)
-    ->first();
-
-$leaveCurrent = DB::table('leaves')
-    ->where('employee_id', $request->employee_id)
-    ->where('leavedate_no', $date)
-    ->where('leave_status', 1)
-    ->first();
-
-$leaveSwap = DB::table('leaves')
-    ->where('employee_id', $request->employee_id)
-    ->where('leavedate_no', $swapDate)
-    ->where('leave_status', 1)
-    ->first();
-
-if (
-    ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
-    ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
-    $leaveCurrent ||
-    $leaveSwap
-) {
-    return response()->json([
-        'success' => false,
-        'message' => 'Leave / Absent cannot be swapped'
-    ], 422);
-}
-            $currentData = [
-                'shift_type' => $currentShift->shift_type,
-                'shift_from_time' => $currentShift->shift_from_time,
-                'shift_to_time' => $currentShift->shift_to_time,
-                'holiday_type' => $currentShift->holiday_type,
-                'occasion' => $currentShift->occasion,
-            ];
-
-            $swapData = [
-                'shift_type' => $swapShift->shift_type,
-                'shift_from_time' => $swapShift->shift_from_time,
-                'shift_to_time' => $swapShift->shift_to_time,
-                'holiday_type' => $swapShift->holiday_type,
-                'occasion' => $swapShift->occasion,
-            ];
-
-            $currentShift->update(array_merge($swapData, ['is_swaped' => 1]));
-            $swapShift->update(array_merge($currentData, ['is_swaped' => 1]));
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Shift swapped successfully'
-            ]);
-        }
-
-        $dateObj = new DateTime($date);
-        $isSunday = $dateObj->format('w') == 0;
-
-        $employee = Employee::findOrFail($request->employee_id);
-
-        $holiday = DB::table('holidays')
-            ->leftJoin('holidaytypes', 'holidays.holidaytype', '=', 'holidaytypes.holidaytype_id')
-            ->where('holidays.holiday_date', $date)
-            ->where('holidays.holiday_department', $employee->cur_department)
-            ->select(
-                'holidays.*',
-                'holidaytypes.holidaytype_name as holiday_type_name'
-            )
-            ->first();
-
-        if ($holiday) {
-            $finalShiftType = 'holiday';
-            $shiftFromTime = null;
-            $shiftToTime = null;
-        } else {
-            $finalShiftType = $request->shift_type;
-            list($shiftFromTime, $shiftToTime) = $this->getShiftTimes($finalShiftType);
-        }
-
-        if ($finalShiftType === 'dayoff') {
-            $shiftTypeInt = 3;
-        } elseif ($finalShiftType === 'holiday') {
-            $shiftTypeInt = 4;
-        } else {
-            $shiftTypeInt = $this->shiftTypeStringToInt($finalShiftType);
-        }
-
-        $holidayType = null;
-        $occasion = null;
-
-        if ($finalShiftType === 'holiday' && $holiday) {
-            $holidayType = $holiday->holiday_type_name;
-            $occasion = $holiday->occasion;
-        }
-
-        $notes = $request->notes;
-
-        $existingShift = Shift::where('employee_id', $request->employee_id)
-            ->where('date_no', $date)
-            ->first();
-
-        if ($existingShift) {
-            $existingShift->update([
-                'shift_type' => $shiftTypeInt,
-                'shift_from_time' => $shiftFromTime,
-                'shift_to_time' => $shiftToTime,
-                'notes' => $notes,
-                'holiday_type' => $holidayType,
-                'occasion' => $occasion,
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Shift updated successfully',
-                'shift' => $existingShift,
-            ]);
-        }
-
-        $shift = Shift::create([
-            'employee_id' => $request->employee_id,
-            'date_no' => $date,
-            'shift_type' => $shiftTypeInt,
-            'shift_from_time' => $shiftFromTime,
-            'shift_to_time' => $shiftToTime,
-            'notes' => $notes,
-            'holiday_type' => $holidayType,
-            'occasion' => $occasion,
-            'is_auto_dayoff' => $isSunday,
-            'is_swaped' => 0,
-        ]);
-
-        DB::commit();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Shift created successfully',
-            'shift' => $shift,
-            'is_sunday' => $isSunday
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Error processing shift: ' . $e->getMessage(),
-            'error_details' => $e->getTraceAsString()
-        ], 500);
-    }
-}
 
     public function bulkCreate(Request $request)
     {
@@ -504,8 +302,229 @@ $shift->occasion = $holiday ? $holiday->occasion : null;
         return $admin?->id ?? User::role('Super admin')->pluck('id')->first();
     }
 
+public function create(Request $request)
+{
+    $request->validate([
+        'employee_id' => 'required|exists:employees,emp_id',
+        'date_no' => 'required|date_format:Y-m-d',
+        'shift_type' => 'required',
+    ]);
 
-    public function update(Request $request)
+    try {
+        DB::beginTransaction();
+
+        $date = $request->date_no;
+        $swapDate = $request->swap_date;
+
+        if (!empty($swapDate)) {
+
+            if ($swapDate == $date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap same date'
+                ], 422);
+            }
+
+            $currentShift = Shift::where('employee_id', $request->employee_id)
+                ->where('date_no', $date)
+                ->first();
+
+            $swapShift = Shift::where('employee_id', $request->employee_id)
+                ->where('date_no', $swapDate)
+                ->first();
+
+            if (!$currentShift || !$swapShift) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Shift not found for selected dates'
+                ], 422);
+            }
+
+            $attendanceCurrent = DB::table('attendances')
+                ->where('employee_id', $request->employee_id)
+                ->where('attendancedate_no', $date)
+                ->first();
+
+            $attendanceSwap = DB::table('attendances')
+                ->where('employee_id', $request->employee_id)
+                ->where('attendancedate_no', $swapDate)
+                ->first();
+
+            $leaveCurrent = DB::table('leaves')
+                ->where('employee_id', $request->employee_id)
+                ->where('leavedate_no', $date)
+                ->where('leave_status', 1)
+                ->first();
+
+            $leaveSwap = DB::table('leaves')
+                ->where('employee_id', $request->employee_id)
+                ->where('leavedate_no', $swapDate)
+                ->where('leave_status', 1)
+                ->first();
+
+            if (
+                ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
+                ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
+                $leaveCurrent ||
+                $leaveSwap
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Leave / Absent cannot be swapped'
+                ], 422);
+            }
+
+            $currentShiftType = $currentShift->shift_type;
+            $swapShiftType = $swapShift->shift_type;
+
+            if (($currentShiftType == 3 && $swapShiftType == 4) ||
+                ($currentShiftType == 4 && $swapShiftType == 3)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap between dayoff and holiday'
+                ], 422);
+            }
+
+            if ($currentShiftType == 3 && $swapShiftType == 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap dayoff with another dayoff'
+                ], 422);
+            }
+
+            if ($currentShiftType == 4 && $swapShiftType == 4) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap holiday with another holiday'
+                ], 422);
+            }
+
+            $currentData = [
+                'shift_type' => $currentShift->shift_type,
+                'shift_from_time' => $currentShift->shift_from_time,
+                'shift_to_time' => $currentShift->shift_to_time,
+                'holiday_type' => $currentShift->holiday_type,
+                'occasion' => $currentShift->occasion,
+            ];
+
+            $swapData = [
+                'shift_type' => $swapShift->shift_type,
+                'shift_from_time' => $swapShift->shift_from_time,
+                'shift_to_time' => $swapShift->shift_to_time,
+                'holiday_type' => $swapShift->holiday_type,
+                'occasion' => $swapShift->occasion,
+            ];
+
+            $currentShift->update(array_merge($swapData, ['is_swaped' => 1]));
+            $swapShift->update(array_merge($currentData, ['is_swaped' => 1]));
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shift swapped successfully'
+            ]);
+        }
+
+        $dateObj = new DateTime($date);
+        $isSunday = $dateObj->format('w') == 0;
+
+        $employee = Employee::findOrFail($request->employee_id);
+
+        $holiday = DB::table('holidays')
+            ->leftJoin('holidaytypes', 'holidays.holidaytype', '=', 'holidaytypes.holidaytype_id')
+            ->where('holidays.holiday_date', $date)
+            ->where('holidays.holiday_department', $employee->cur_department)
+            ->select(
+                'holidays.*',
+                'holidaytypes.holidaytype_name as holiday_type_name'
+            )
+            ->first();
+
+        if ($holiday) {
+            $finalShiftType = 'holiday';
+            $shiftFromTime = null;
+            $shiftToTime = null;
+        } else {
+            $finalShiftType = $request->shift_type;
+            list($shiftFromTime, $shiftToTime) = $this->getShiftTimes($finalShiftType);
+        }
+
+        if ($finalShiftType === 'dayoff') {
+            $shiftTypeInt = 3;
+        } elseif ($finalShiftType === 'holiday') {
+            $shiftTypeInt = 4;
+        } else {
+            $shiftTypeInt = $this->shiftTypeStringToInt($finalShiftType);
+        }
+
+        $holidayType = null;
+        $occasion = null;
+
+        if ($finalShiftType === 'holiday' && $holiday) {
+            $holidayType = $holiday->holiday_type_name;
+            $occasion = $holiday->occasion;
+        }
+
+        $notes = $request->notes;
+
+        $existingShift = Shift::where('employee_id', $request->employee_id)
+            ->where('date_no', $date)
+            ->first();
+
+        if ($existingShift) {
+            $existingShift->update([
+                'shift_type' => $shiftTypeInt,
+                'shift_from_time' => $shiftFromTime,
+                'shift_to_time' => $shiftToTime,
+                'notes' => $notes,
+                'holiday_type' => $holidayType,
+                'occasion' => $occasion,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shift updated successfully',
+                'shift' => $existingShift,
+            ]);
+        }
+
+        $shift = Shift::create([
+            'employee_id' => $request->employee_id,
+            'date_no' => $date,
+            'shift_type' => $shiftTypeInt,
+            'shift_from_time' => $shiftFromTime,
+            'shift_to_time' => $shiftToTime,
+            'notes' => $notes,
+            'holiday_type' => $holidayType,
+            'occasion' => $occasion,
+            'is_auto_dayoff' => $isSunday,
+            'is_swaped' => 0,
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shift created successfully',
+            'shift' => $shift,
+            'is_sunday' => $isSunday
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error processing shift: ' . $e->getMessage(),
+            'error_details' => $e->getTraceAsString()
+        ], 500);
+    }
+}
+
+public function update(Request $request)
 {
     $request->validate([
         'shift_type' => 'required',
@@ -540,39 +559,66 @@ $shift->occasion = $holiday ? $holiday->occasion : null;
                     'message' => 'Shift not found for selected dates'
                 ], 422);
             }
-$attendanceCurrent = DB::table('attendances')
-    ->where('employee_id', $request->employee_id)
-    ->where('attendancedate_no', $date)
-    ->first();
 
-$attendanceSwap = DB::table('attendances')
-    ->where('employee_id', $request->employee_id)
-    ->where('attendancedate_no', $swapDate)
-    ->first();
+            $attendanceCurrent = DB::table('attendances')
+                ->where('employee_id', $request->employee_id)
+                ->where('attendancedate_no', $date)
+                ->first();
 
-$leaveCurrent = DB::table('leaves')
-    ->where('employee_id', $request->employee_id)
-    ->where('leavedate_no', $date)
-    ->where('leave_status', 1)
-    ->first();
+            $attendanceSwap = DB::table('attendances')
+                ->where('employee_id', $request->employee_id)
+                ->where('attendancedate_no', $swapDate)
+                ->first();
 
-$leaveSwap = DB::table('leaves')
-    ->where('employee_id', $request->employee_id)
-    ->where('leavedate_no', $swapDate)
-    ->where('leave_status', 1)
-    ->first();
+            $leaveCurrent = DB::table('leaves')
+                ->where('employee_id', $request->employee_id)
+                ->where('leavedate_no', $date)
+                ->where('leave_status', 1)
+                ->first();
 
-if (
-    ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
-    ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
-    $leaveCurrent ||
-    $leaveSwap
-) {
-    return response()->json([
-        'success' => false,
-        'message' => 'Leave / Absent cannot be swapped'
-    ], 422);
-}
+            $leaveSwap = DB::table('leaves')
+                ->where('employee_id', $request->employee_id)
+                ->where('leavedate_no', $swapDate)
+                ->where('leave_status', 1)
+                ->first();
+
+            if (
+                ($attendanceCurrent && in_array($attendanceCurrent->attendance_type, [0, 3])) ||
+                ($attendanceSwap && in_array($attendanceSwap->attendance_type, [0, 3])) ||
+                $leaveCurrent ||
+                $leaveSwap
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Leave / Absent cannot be swapped'
+                ], 422);
+            }
+
+            $currentShiftType = $currentShift->shift_type;
+            $swapShiftType = $swapShift->shift_type;
+
+            if (($currentShiftType == 3 && $swapShiftType == 4) ||
+                ($currentShiftType == 4 && $swapShiftType == 3)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap between dayoff and holiday'
+                ], 422);
+            }
+
+            if ($currentShiftType == 3 && $swapShiftType == 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap dayoff with another dayoff'
+                ], 422);
+            }
+
+            if ($currentShiftType == 4 && $swapShiftType == 4) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap holiday with another holiday'
+                ], 422);
+            }
+
             $currentData = [
                 'shift_type' => $currentShift->shift_type,
                 'shift_from_time' => $currentShift->shift_from_time,
@@ -681,7 +727,6 @@ if (
         ]);
     }
 }
-
     public function delete($id)
     {
         try {

@@ -259,23 +259,29 @@
                                 </select>
                             </div>
 
+
+
+                             <!-- Holiday Info Display -->
+                    <div class="mb-3 d-none" id="holidayInfoContainer">
+                        <div class="alert alert-info" style="background-color: #e8f4fd; border-color: #b8e1fc;">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-calendar-event me-2 fs-5"></i>
+                                <div>
+                                    <div class="fw-bold mb-1">Holiday Information</div>
+                                    <div id="holidayOccasion" class="small">-</div>
+                                    <div id="holidayType" class="small text-muted">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                             <!-- Swap Date -->
 <div class="mb-3 d-none" id="swapDateContainer">
     <label class="form-label">Swap Date</label>
     <input type="date" id="swapDate" class="form-control">
 </div>
 
-<div class="mb-3 d-none" id="holidayListContainer">
-    <label class="form-label">Upcoming Holidays</label>
 
-    <div class="d-flex align-items-center">
-        <button type="button" id="prevHoliday" class="btn btn-sm btn-light me-2">←</button>
-
-        <div id="holidayList" class="d-flex gap-2 overflow-hidden" style="flex:1;"></div>
-
-        <button type="button" id="nextHoliday" class="btn btn-sm btn-light ms-2">→</button>
-    </div>
-</div>
                             <div class="mb-3">
                                 <label for="shiftNotes" class="form-label">Notes</label>
                                 <textarea id="shiftNotes" class="form-control" name="notes" rows="3"></textarea>
@@ -626,109 +632,8 @@ function updateShiftTypeDropdown(type) {
     }
 }
 
-    let holidayData = [];
-let holidayIndex = 0;
-
-function loadUpcomingHolidays() {
-    fetch('/dashboard/employees/shifts/upcoming-holidays')
-        .then(res => res.json())
-        .then(data => {
-
-            // ✅ remove duplicates (extra safety)
-            const seen = new Set();
-            holidayData = data.filter(h => {
-                if (seen.has(h.date)) return false;
-                seen.add(h.date);
-                return true;
-            });
-
-            holidayIndex = 0;
-            renderHolidaySlider();
-        });
-}
-
-function formatDateDMY(dateStr) {
-    const date = new Date(dateStr);
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}-${month}-${year}`;
-}
-
-function renderHolidaySlider() {
-    const container = document.getElementById('holidayList');
-    container.innerHTML = '';
-
-    const visible = holidayData.slice(holidayIndex, holidayIndex + 3);
-
-    if (!visible.length) {
-        container.innerHTML = '<small>No holidays</small>';
-        return;
-    }
-
-    visible.forEach(h => {
-        container.innerHTML += `
-            <div class="border rounded p-2 text-center holiday-item"
-                 style="min-width:100px; cursor:pointer"
-                 data-date="${h.date}">
-                <strong style="font-size:12px;">${h.occasion ?? 'Holiday'}</strong><br>
-                <small>${formatDateDMY(h.date)}</small>
-            </div>
-        `;
-    });
-
-    // click event
-    document.querySelectorAll('.holiday-item').forEach(el => {
-        el.addEventListener('click', function () {
-            document.getElementById('swapDate').value = this.dataset.date;
-        });
-    });
-}
-
-
-
-document.getElementById('prevHoliday').addEventListener('click', () => {
-    if (holidayIndex > 0) {
-        holidayIndex--;
-        renderHolidaySlider();
-    }
-});
-
-document.getElementById('nextHoliday').addEventListener('click', () => {
-    if (holidayIndex + 3 < holidayData.length) {
-        holidayIndex++;
-        renderHolidaySlider();
-    }
-});
 </script>
         <script>
-
-
-
-
-            document.getElementById('shiftType').addEventListener('change', function () {
-    const type = this.value;
-
-    const swap = document.getElementById('swapDateContainer');
-    const holidayList = document.getElementById('holidayListContainer');
-
-    // Reset
-    swap.classList.add('d-none');
-    holidayList.classList.add('d-none');
-
-    if (type === 'holiday') {
-        swap.classList.remove('d-none');
-        holidayList.classList.remove('d-none');
-
-        loadUpcomingHolidays(); // optional
-    }
-
-    if (type === 'dayoff') {
-        swap.classList.remove('d-none');
-    }
-});
 
 
 
@@ -1816,8 +1721,24 @@ document.getElementById('nextHoliday').addEventListener('click', () => {
 
                     bulkShiftModal.show();
                 }
+// Function to display holiday information in the modal
+function displayHolidayInfo(shift) {
+    const holidayInfoContainer = document.getElementById('holidayInfoContainer');
+    const holidayOccasion = document.getElementById('holidayOccasion');
+    const holidayType = document.getElementById('holidayType');
 
-               function editShift(shiftId) {
+    if (parseInt(shift.shift_type) === 4) {
+        holidayInfoContainer.classList.remove('d-none');
+
+        holidayOccasion.innerHTML = `<strong>Occasion:</strong> ${shift.occasion || '-'}`;
+        holidayType.innerHTML = `<strong>Holiday Type:</strong> ${shift.holiday_type || '-'}`;
+    } else {
+        holidayInfoContainer.classList.add('d-none');
+    }
+}
+
+// Update the editShift function
+function editShift(shiftId) {
     const shift = shifts.find(s => s.shift_id == shiftId);
     if (!shift) return;
 
@@ -1841,20 +1762,54 @@ document.getElementById('nextHoliday').addEventListener('click', () => {
 
     document.getElementById('deleteShift').style.display = 'block';
 
-    // 🔥 ADD THIS (controls dropdown options)
+    // Display holiday info if it's a holiday shift
+    displayHolidayInfo(shift);
+
+    // Controls dropdown options
     updateShiftTypeDropdown(selectedType);
 
-    // 🔥 ADD THIS (controls swap + holiday UI)
+    // Controls swap UI
     document.getElementById('shiftType').dispatchEvent(new Event('change'));
 
     shiftModal.show();
 }
 
-                function resetShiftForm() {
-                    document.getElementById('shiftForm').reset();
-                    document.getElementById('shiftId').value = '';
-                    document.getElementById('deleteShift').style.display = 'none';
-                }
+// Update the shiftType change event listener
+document.getElementById('shiftType').addEventListener('change', function () {
+    const type = this.value;
+    const swap = document.getElementById('swapDateContainer');
+    const holidayInfo = document.getElementById('holidayInfoContainer');
+
+    swap.classList.add('d-none');
+
+    if (type === 'holiday') {
+        swap.classList.remove('d-none');
+
+    } else {
+        holidayInfo.classList.add('d-none');
+    }
+
+    if (type === 'dayoff') {
+        swap.classList.remove('d-none');
+    }
+});
+
+// Update modal hidden event listener
+document.getElementById('shiftModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('swapDate').value = '';
+    document.getElementById('swapDateContainer').classList.add('d-none');
+    document.getElementById('holidayInfoContainer').classList.add('d-none');
+    document.getElementById('holidayOccasion').innerHTML = '-';
+    document.getElementById('holidayType').innerHTML = '-';
+});
+
+// Update resetShiftForm function
+function resetShiftForm() {
+    document.getElementById('shiftForm').reset();
+    document.getElementById('shiftId').value = '';
+    document.getElementById('deleteShift').style.display = 'none';
+    document.getElementById('holidayInfoContainer').classList.add('d-none');
+}
 
 
 
@@ -2320,12 +2275,7 @@ function saveShift() {
             });
 
 
-document.getElementById('shiftModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('swapDate').value = '';
 
-    document.getElementById('swapDateContainer').classList.add('d-none');
-    document.getElementById('holidayListContainer').classList.add('d-none');
-});
         </script>
     </div>
 
@@ -2449,6 +2399,25 @@ document.getElementById('shiftModal').addEventListener('hidden.bs.modal', functi
 
             color: #4285f4;
         }
+        /* Holiday info styling */
+#holidayInfoContainer .alert-info {
+    background-color: #e8f4fd;
+    border-left: 4px solid #0d6efd;
+    padding: 12px 15px;
+}
+
+#holidayInfoContainer i.bi-calendar-event {
+    color: #0d6efd;
+}
+
+#holidayInfoContainer #holidayOccasion {
+    color: #0c5460;
+    font-weight: 500;
+}
+
+#holidayInfoContainer #holidayType {
+    color: #6c757d;
+}
 
         .date-range-footer {
             display: flex;
