@@ -35,7 +35,7 @@
     transition: all 0.2s ease;
 }
 .form-control:focus, .form-select:focus{
-    border-color: #28a745;
+    border-color: var(--primary);
     box-shadow: 0 0 0 0.15rem rgba(40,167,69,0.15);
 }
 textarea.form-control{
@@ -55,7 +55,7 @@ textarea.form-control{
 }
 
 .upload-box:hover {
-    border-color: #28a745;
+    border-color: var(--primary);
     background: #f1fff5;
 }
 
@@ -155,7 +155,7 @@ textarea.form-control{
 <div class="d-flex justify-content-center">
     <div class="card border-0 shadow-sm p-4 w-100" style="max-width:1100px;">
 
-<h5 class="mb-4 fw-bold text-success">Inventory Edit</h5>
+<h5 class="mb-4 fw-bold text-primary">Inventory Edit</h5>
 
 <form id="itemForm">
 @csrf
@@ -197,9 +197,16 @@ textarea.form-control{
 </select>
 </div>
 
+<div class="col-md-4">
+    <label class="form-label">Item Type</label>
+    <select name="item_type" class="form-select select2-item_type">
+        <option value="">Select Item Type</option>
+        <option value="new" {{ $item->item_type=='new' ? 'selected' : '' }}>New</option>
+        <option value="refurbished" {{ $item->item_type=='refurbished' ? 'selected' : '' }}>Refurbished</option>
+    </select>
+</div>
 
-
-<div class="col-12 mt-3">
+<div class="col-12 mt-4">
     <div class="bg-light rounded-3 p-3 mb-2">
         <h6 class="fw-bold text-primary mb-0">Item Details</h6>
     </div>
@@ -251,32 +258,16 @@ textarea.form-control{
 <input type="date" name="warranty_expiry" class="form-control" value="{{ $item->warranty_expiry }}">
 </div>
 
-<div class="col-12 mt-3">
-    <div class="bg-light rounded-3 p-3 mb-2">
-        <h6 class="fw-bold text-primary mb-0">Stock Information</h6>
-    </div>
-</div>
-
 <div class="col-md-4">
        <label class="form-label">Quantity</label>
 <input type="number" name="quantity" placeholder="Total quantity" class="form-control" value="{{ $item->quantity }}">
 </div>
 
-<div class="col-md-4">
-       <label class="form-label">Avaliable Stock</label>
-<input type="number" name="available_stock" placeholder="Available stock" class="form-control" value="{{ $item->available_stock }}">
-</div>
 
-<div class="col-md-4">
-     <label class="form-label">Status</label>
-<select name="status" class="form-select select2-status">
-<option value="">Select status</option>
-<option value="available" {{ $item->status=='available'?'selected':'' }}>Available</option>
-<option value="assigned"  {{ $item->status=='assigned'?'selected':'' }}>Assigned</option>
-<option value="maintenance" {{ $item->status=='maintenance'?'selected':'' }}>Maintenance</option>
-<option value="damaged" {{ $item->status=='damaged'?'selected':'' }}>Damaged</option>
-</select>
-</div>
+
+
+
+
 
 <div class="col-12 mt-3 ">
     <div class="bg-light rounded-3 p-3 mb-2">
@@ -383,7 +374,7 @@ textarea.form-control{
 
 <h6 class="fw-bold mb-3 text-primary">Actions</h6>
 <div class="d-flex gap-3">
-    <button type="submit" class="btn btn-success flex-fill py-2">
+    <button type="submit" class="btn btn-primary flex-fill py-2">
     Update
     </button>
 
@@ -593,8 +584,8 @@ $(document).ready(function(){
     });
 
     // Status dropdown
-    $('.select2-status').select2({
-        placeholder: "Select status",
+    $('.select2-item_type').select2({
+        placeholder: "Select Item Type",
         allowClear: true,
         width: '100%'
     });
@@ -606,7 +597,7 @@ function showError(input, message){
     input.addClass('is-invalid');
 
     // 🔥 Handle Select2
-    if(input.hasClass('select2-category') || input.hasClass('select2-status')){
+    if(input.hasClass('select2-category') || input.hasClass('select2-item_type')){
         input.next('.select2-container').find('.select2-selection')
             .addClass('is-invalid');
     }
@@ -622,7 +613,7 @@ function showError(input, message){
             input.removeClass('is-invalid');
 
             // remove select2 border
-            if(input.hasClass('select2-category') || input.hasClass('select2-status')){
+            if(input.hasClass('select2-category') || input.hasClass('select2-item_type')){
                 input.next('.select2-container').find('.select2-selection')
                     .removeClass('is-invalid');
             }
@@ -637,7 +628,7 @@ function clearFieldError(input){
     input.closest('div').find('.error-msg').remove();
 
     // 🔥 remove select2 border
-    if(input.hasClass('select2-category') || input.hasClass('select2-status')){
+    if(input.hasClass('select2-category') || input.hasClass('select2-item_type')){
         input.next('.select2-container').find('.select2-selection')
             .removeClass('is-invalid');
     }

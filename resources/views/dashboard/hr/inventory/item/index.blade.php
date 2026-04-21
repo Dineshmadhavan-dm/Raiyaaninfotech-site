@@ -37,14 +37,13 @@
         </select>
     </div>
 
-    <div class="col-md-2">
-        <select name="status" class="form-control">
-            <option value="">All Status</option>
-            <option value="available" {{ request('status')=='available'?'selected':'' }}>Available</option>
-            <option value="assigned" {{ request('status')=='assigned'?'selected':'' }}>Assigned</option>
-            <option value="damaged" {{ request('status')=='damaged'?'selected':'' }}>Damaged</option>
-        </select>
-    </div>
+  <div class="col-md-2">
+    <select name="item_type" class="form-control">
+        <option value="">All Item Type</option>
+        <option value="new" {{ request('item_type')=='new' ? 'selected' : '' }}>New</option>
+        <option value="refurbished" {{ request('item_type')=='refurbished' ? 'selected' : '' }}>Refurbished</option>
+    </select>
+</div>
 
     <div class="col-md-3">
         <button class="btn btn-primary">Filter</button>
@@ -78,7 +77,7 @@
         <input type="hidden" name="item_name" value="{{ request('item_name') }}">
         <input type="hidden" name="item_code" value="{{ request('item_code') }}">
         <input type="hidden" name="category_id" value="{{ request('category_id') }}">
-        <input type="hidden" name="status" value="{{ request('status') }}">
+        <input type="hidden" name="item_type" value="{{ request('item_type') }}">
 
 
 
@@ -95,7 +94,7 @@
                             <th>Item Name</th>
                             <th>Item Code</th>
                             <th>Category</th>
-                            <th>Status</th>
+                            <th>Item Type</th>
                             <th class="">Actions</th>
                         </tr>
                     </thead>
@@ -106,23 +105,24 @@
                           <td>{{ $items->firstItem() + $i }}</td>
                             <!-- IMAGE -->
                            <td>
-    <img src="{{ asset('inventory_images/'.$item->item_image) }}"
-         width="40" height="40"
-         class="rounded-circle"
-         style="object-fit: cover;">
+   <img src="{{ asset('inventory_images/'.$item->item_image) }}"
+     width="40" height="40"
+     class="rounded-circle item-img"
+     style="object-fit: cover;"
+     onerror="this.onerror=null; this.src='/images/placeholder.jpg';">
 </td>
 
                             <td>{{ $item->item_name }}</td>
                             <td>{{ $item->item_code }}</td>
                             <td>{{ $item->category->category_name ?? '-' }}</td>
 
-                            <td>
-                                <span class="badge p-2
-                                    {{ $item->status == 'available' ? 'bg-success' :
-                                       ($item->status == 'assigned' ? 'bg-warning' : 'bg-danger') }}">
-                                    {{ $item->status }}
-                                </span>
-                            </td>
+                           <td>
+    <span class="badge p-2
+        {{ $item->item_type == 'new' ? 'bg-primary' :
+           ($item->item_type == 'refurbished' ? 'bg-info' : 'bg-secondary') }}">
+        {{ ucfirst($item->item_type) }}
+    </span>
+</td>
 
                             <td class="">
 
@@ -140,12 +140,14 @@
     data-invoice="{{ $item->invoice_number }}"
     data-warranty="{{ $item->warranty_expiry }}"
     data-qty="{{ $item->quantity }}"
-    data-stock="{{ $item->available_stock }}"
-    data-status="{{ $item->status }}"
+    data-item_type="{{ $item->item_type }}"
     data-desc="{{ $item->description }}"
     data-remarks="{{ $item->remarks }}"
-    data-image="{{ asset('inventory_images/'.$item->item_image) }}"
-    data-doc="{{ asset('inventory_docs/'.$item->document_file) }}"
+data-image="{{
+    (!empty($item->item_image) && file_exists(public_path('inventory_images/'.$item->item_image)))
+    ? asset('inventory_images/'.$item->item_image)
+    : asset('images/placeholder.jpg')
+}}"
     data-bs-toggle="modal"
     data-bs-target="#billModal">
     <i class="bi bi-eye"></i>
@@ -197,7 +199,7 @@
         <h4 class="fw-bold mb-0">Inventory Invoice</h4>
         <small class="text-muted">System Generated</small>
     </div>
-    <span class="badge bg-success px-3 py-2" id="b_status"></span>
+    <span class="badge bg-success px-3 py-2" id="b_item_type"></span>
 </div>
 
 <div class="row">
@@ -243,14 +245,12 @@
             <thead class="bg-light rounded">
                 <tr>
                     <th>Qty</th>
-                    <th>Available</th>
                     <th>Cost (₹)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr class="fw-bold">
                     <td id="b_qty"></td>
-                    <td id="b_stock"></td>
                     <td>₹ <span id="b_cost"></span></td>
                 </tr>
             </tbody>
@@ -317,7 +317,7 @@ $(document).on('click','.view-btn',function(){
     $('#b_name').text($(this).data('name'));
     $('#b_code').text($(this).data('code'));
     $('#b_category').text($(this).data('category'));
-    $('#b_status').text($(this).data('status'));
+    $('#b_item_type').text($(this).data('item_type'));
 
     $('#b_brand').text($(this).data('brand'));
     $('#b_model').text($(this).data('model'));

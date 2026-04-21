@@ -33,8 +33,8 @@ class InventoryItemController extends Controller
         $query->where('item_code', 'like', '%' . $request->item_code . '%');
     }
 
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
+    if ($request->filled('item_type')) {
+        $query->where('item_type', $request->item_type);
     }
 
     if ($request->filled('category_id')) {

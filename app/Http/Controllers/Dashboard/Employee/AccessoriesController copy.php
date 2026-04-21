@@ -46,40 +46,16 @@ class AccessoriesController extends Controller
             });
         }
 
-        // Pagination
+        // Pagination - ONLY GET PAGINATED RESULTS ONCE
         $perPage = $request->get('per_page', 3);
         $assignments = $query->latest()->paginate($perPage)->withQueryString();
 
-        // Add maintenance tracking info to paginated items
+        // Add pending maintenance status to paginated items
         foreach ($assignments as $assignment) {
-            // Check for pending maintenance
             $hasPendingMaintenance = InventoryMaintenance::where('item_id', $assignment->item_id)
                 ->where('status', 'pending')
                 ->exists();
             $assignment->has_pending_maintenance = $hasPendingMaintenance;
-
-            // Get ALL maintenance records for this item
-            $allMaintenances = InventoryMaintenance::where('item_id', $assignment->item_id)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Count total maintenance requests
-            $assignment->maintenance_count = $allMaintenances->count();
-
-            // Get the latest maintenance record
-            $latestMaintenance = $allMaintenances->first();
-            if ($latestMaintenance) {
-                // Generate tracking ID from maintenance ID (MNT-000001 format)
-                $assignment->last_tracking_id = 'MNT-' . str_pad($latestMaintenance->id, 6, '0', STR_PAD_LEFT);
-                $assignment->last_maintenance_date = $latestMaintenance->created_at;
-                $assignment->last_maintenance_status = $latestMaintenance->status;
-                $assignment->last_maintenance_type = $latestMaintenance->maintenance_type;
-            } else {
-                $assignment->last_tracking_id = null;
-                $assignment->last_maintenance_date = null;
-                $assignment->last_maintenance_status = null;
-                $assignment->last_maintenance_type = null;
-            }
         }
 
         return view('dashboard.employee.accessories.index', compact('assignments', 'employeeId'));
@@ -89,9 +65,9 @@ class AccessoriesController extends Controller
     public function requestMaintenance(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|exists:inventory_items,id',
+            'item_id' => 'required',
             'issue_description' => 'required|min:5|max:500',
-            'maintenance_type' => 'required|in:service,upgrade,scrap',
+            'maintenance_type' => 'required',
             'remarks' => 'nullable|max:300',
         ]);
 
@@ -110,14 +86,6 @@ class AccessoriesController extends Controller
             }
         }
 
-        if (!$employeeId) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Employee record not found'
-            ]);
-        }
-
-        // Verify the item is assigned to this employee
         $assignment = InventoryAssignment::where('item_id', $request->item_id)
             ->where('employee_id', $employeeId)
             ->where('status', 'assigned')
@@ -142,7 +110,6 @@ class AccessoriesController extends Controller
             ]);
         }
 
-        // Create maintenance record
         $maintenance = InventoryMaintenance::create([
             'item_id' => $request->item_id,
             'employee_id' => $employeeId,
@@ -155,62 +122,9 @@ class AccessoriesController extends Controller
             'remarks' => $request->remarks,
         ]);
 
-        // Generate tracking ID
-        $trackingId = 'MNT-' . str_pad($maintenance->id, 6, '0', STR_PAD_LEFT);
-
         return response()->json([
             'status' => true,
-            'message' => 'Maintenance request submitted successfully. Tracking ID: ' . $trackingId,
-            'tracking_id' => $trackingId,
-            'maintenance_id' => $maintenance->id
-        ]);
-    }
-
-    // View maintenance history for an item
-    public function maintenanceHistory(Request $request)
-    {
-        $request->validate([
-            'item_id' => 'required|exists:inventory_items,id'
-        ]);
-
-        $itemId = $request->item_id;
-
-        // Verify the employee has access to this item
-        $user = auth()->user();
-        $employeeId = null;
-
-        if ($user->employee) {
-            $employeeId = $user->employee->emp_id;
-        }
-
-        if (!$employeeId) {
-            $employee = \App\Models\Employee::where('user_id', $user->id)->first();
-            if ($employee) {
-                $employeeId = $employee->emp_id;
-            }
-        }
-
-        // Check if item is assigned to this employee
-        $isAssigned = InventoryAssignment::where('item_id', $itemId)
-            ->where('employee_id', $employeeId)
-            ->where('status', 'assigned')
-            ->exists();
-
-        if (!$isAssigned) {
-            return response()->json([
-                'status' => false,
-                'message' => 'You do not have access to this item'
-            ]);
-        }
-
-        $maintenances = InventoryMaintenance::where('item_id', $itemId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'status' => true,
-            'data' => $maintenances,
-            'count' => $maintenances->count()
+            'message' => 'Maintenance request submitted successfully'
         ]);
     }
 }

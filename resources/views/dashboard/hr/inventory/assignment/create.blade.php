@@ -90,16 +90,7 @@
 </div>
 <div class="row g-3 mt-3">
 
-<!-- ITEM -->
-<div class="col-md-6">
-<label>Item  <span class=" text-danger">*</span></label>
-<select name="item_id" class="form-select select2">
-<option value="">Select Item</option>
-@foreach($items as $item)
-<option value="{{ $item->id }}">{{ $item->item_name }}</option>
-@endforeach
-</select>
-</div>
+
 
 <!-- DEPARTMENT -->
 <div class="col-md-6">
@@ -117,6 +108,18 @@
 <label>Employee <span class=" text-danger">*</span></label>
 <select name="employee_id" id="employee" class="form-select select2">
 <option value="">Select Employee</option>
+</select>
+</div>
+
+
+<!-- ITEM -->
+<div class="col-md-6">
+<label>Item  <span class=" text-danger">*</span></label>
+<select name="item_id" class="form-select select2">
+<option value="">Select Item</option>
+@foreach($items as $item)
+<option value="{{ $item->id }}">{{ $item->item_name }}</option>
+@endforeach
 </select>
 </div>
 
@@ -145,7 +148,7 @@
 <h6 class="fw-bold text-primary mb-3">Actions</h6>
 
 <div class="d-flex gap-2">
-<button type="submit" class="btn btn-success w-100">Assign</button>
+<button type="submit" class="btn btn-primary w-100">Assign</button>
 
 <a href="{{ route('inventory.assignments.index') }}" class="btn btn-outline-secondary w-100">
 Cancel

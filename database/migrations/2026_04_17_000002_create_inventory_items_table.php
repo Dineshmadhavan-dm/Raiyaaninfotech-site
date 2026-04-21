@@ -22,8 +22,7 @@ return new class extends Migration {
             $table->date('warranty_expiry')->nullable();
 
             $table->integer('quantity')->default(1);
-            $table->integer('available_stock')->default(1);
-            $table->enum('status', ['available','assigned','maintenance','damaged'])->default('available');
+          $table->enum('item_type', ['new', 'refurbished'])->default('new');
             $table->text('description')->nullable();
             $table->text('remarks')->nullable();
             $table->string('item_image')->nullable();

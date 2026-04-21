@@ -1,5 +1,5 @@
 <x-layout>
-@section('title','Add Maintenance')
+@section('title','Edit Maintenance')
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 
@@ -27,24 +27,9 @@
     right: 10px;
 }
 
-.select2-container--default .select2-selection--single .select2-selection__arrow b {
-    border-width: 6px 5px 0 5px;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .employee-details-card {
     background: #f8f9fa;
     border-left: 4px solid #0d6efd;
-    transition: all 0.3s ease;
-}
-
-.employee-details-card:hover {
-    background: #e9ecef;
 }
 </style>
 
@@ -60,7 +45,7 @@
                 <li class="breadcrumb-item">
                     <a href="{{ route('inventory.maintenance.index') }}" class="text-decoration-none text-dark">Inventory Maintenance</a>
                 </li>
-                <li class="breadcrumb-item active text-primary">Create</li>
+                <li class="breadcrumb-item active text-primary">Edit</li>
             </ol>
         </nav>
     </div>
@@ -71,49 +56,51 @@
 
 <form id="maintenanceForm">
 @csrf
+@method('PUT')
 
 <div class="row">
 
-<!-- LEFT FORM -->
 <div class="col-lg-9">
-
 <div class="card shadow-sm border-0 p-4">
 
 <div class="bg-light rounded-3 p-3 mb-3">
-    <h6 class="fw-bold text-primary mb-0">Maintenance Details</h6>
+    <h6 class="fw-bold text-primary mb-0">Edit Maintenance Details</h6>
 </div>
 
 <div class="row g-3">
 
-<!-- ITEM -->
+<!-- ITEM (Read-only for edit) -->
 <div class="col-md-6">
     <label>Item <span class="text-danger">*</span></label>
-    <select name="item_id" id="item_id" class="form-select select2">
-        <option value="">Select Item</option>
-        @foreach($items as $item)
-        <option value="{{ $item->id }}">{{ $item->item_name }} ({{ $item->item_code }})</option>
-        @endforeach
-    </select>
+    <input type="text" class="form-control" value="{{ $maintenance->item->item_name }} ({{ $maintenance->item->item_code }})" readonly disabled>
+    <input type="hidden" name="item_id" value="{{ $maintenance->item_id }}">
 </div>
 
-<!-- ASSIGNED EMPLOYEE DETAILS (Dynamic) -->
-<div class="col-12" id="employeeDetailsContainer" style="display:none;">
-    <div class="card employee-details-card mt-2 mb-2">
+<!-- Assigned Employee Details -->
+<div class="col-12">
+    <div class="card employee-details-card">
         <div class="card-body py-3">
             <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <i class="bi bi-person-badge fs-2 text-primary"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <h6 class="mb-1 text-primary">Currently Assigned To:</h6>
-                    <div id="employeeDetails">
-                        <p class="mb-1"><strong>Name:</strong> <span id="emp_name">-</span></p>
-                        <p class="mb-1"><strong>Department:</strong> <span id="emp_dept">-</span></p>
-                        <p class="mb-0"><strong>Assigned Date:</strong> <span id="assigned_date">-</span></p>
-                    </div>
-                </div>
-                <div>
-                    <i class="bi bi-info-circle-fill text-info"></i>
+                    <h6 class="mb-1 text-primary">Item Assignment Details:</h6>
+                    @php
+                        $assignment = \App\Models\InventoryAssignment::where('item_id', $maintenance->item_id)
+                            ->where('status', 'assigned')
+                            ->with(['employee', 'department'])
+                            ->first();
+                    @endphp
+                    @if($assignment)
+                        <p class="mb-1"><strong>Assigned To:</strong> {{ $assignment->employee->fullname ?? 'N/A' }}</p>
+                        <p class="mb-1"><strong>Department:</strong> {{ $assignment->department->dep_name ?? 'N/A' }}</p>
+                        <p class="mb-0"><strong>Assigned Date:</strong> {{ $assignment->assigned_date ?? 'N/A' }}</p>
+                        <input type="hidden" name="employee_id" value="{{ $assignment->employee_id }}">
+                    @else
+                        <p class="mb-0 text-warning">⚠️ This item is not currently assigned to any employee</p>
+                        <input type="hidden" name="employee_id" value="">
+                    @endif
                 </div>
             </div>
         </div>
@@ -125,44 +112,56 @@
     <label>Type <span class="text-danger">*</span></label>
     <select name="maintenance_type" class="form-select select2">
         <option value="">Select Type</option>
-        <option value="scrap">Scrap</option>
-        <option value="service">Service</option>
-        <option value="upgrade">Upgrade</option>
+        <option value="scrap" {{ $maintenance->maintenance_type == 'scrap' ? 'selected' : '' }}>Scrap</option>
+        <option value="service" {{ $maintenance->maintenance_type == 'service' ? 'selected' : '' }}>Service</option>
+        <option value="upgrade" {{ $maintenance->maintenance_type == 'upgrade' ? 'selected' : '' }}>Upgrade</option>
+    </select>
+</div>
+
+<!-- STATUS -->
+<div class="col-md-6">
+    <label>Status <span class="text-danger">*</span></label>
+    <select name="status" class="form-select select2">
+        <option value="pending" {{ $maintenance->status == 'pending' ? 'selected' : '' }}>Pending</option>
+        <option value="completed" {{ $maintenance->status == 'completed' ? 'selected' : '' }}>Completed</option>
     </select>
 </div>
 
 <!-- ISSUE -->
 <div class="col-md-6">
     <label>Issue <span class="text-danger">*</span></label>
-    <textarea name="issue_description" class="form-control" placeholder="Enter issue description" rows="3"></textarea>
+    <textarea name="issue_description" class="form-control" placeholder="Enter issue description" rows="3">{{ $maintenance->issue_description }}</textarea>
 </div>
 
 <!-- COST -->
 <div class="col-md-6">
     <label>Cost <span class="text-danger">*</span></label>
-    <input type="number" step="0.01" name="cost" class="form-control" placeholder="Enter cost">
+    <input type="number" step="0.01" name="cost" class="form-control" value="{{ $maintenance->cost }}" placeholder="Enter cost">
 </div>
 
 <!-- VENDOR -->
 <div class="col-md-6">
     <label>Vendor Name <span class="text-danger">*</span></label>
-    <input type="text" name="vendor_name" class="form-control" placeholder="Enter vendor name">
+    <input type="text" name="vendor_name" class="form-control" value="{{ $maintenance->vendor_name }}" placeholder="Enter vendor name">
 </div>
 
-<!-- DATE -->
+<!-- START DATE -->
 <div class="col-md-6">
     <label>Start Date <span class="text-danger">*</span></label>
-    <input type="date" name="start_date" class="form-control">
+    <input type="date" name="start_date" class="form-control" value="{{ $maintenance->start_date }}">
+</div>
+
+<!-- END DATE (only show if completed) -->
+<div class="col-md-6" id="endDateContainer" style="{{ $maintenance->status == 'completed' ? 'display:block' : 'display:none' }}">
+    <label>End Date</label>
+    <input type="date" name="end_date" class="form-control" value="{{ $maintenance->end_date }}">
 </div>
 
 <!-- REMARK -->
 <div class="col-12">
     <label>Remarks</label>
-    <textarea name="remarks" class="form-control" placeholder="Optional remarks" rows="2"></textarea>
+    <textarea name="remarks" class="form-control" placeholder="Optional remarks" rows="2">{{ $maintenance->remarks }}</textarea>
 </div>
-
-<!-- Hidden field for employee_id -->
-<input type="hidden" name="employee_id" id="employee_id" value="">
 
 </div>
 
@@ -174,7 +173,7 @@
     <div class="card shadow-sm border-0 p-4 position-sticky" style="top:100px;">
         <h6 class="fw-bold text-primary mb-3">Actions</h6>
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-100">Save</button>
+            <button type="submit" class="btn btn-primary w-100">Update</button>
             <a href="{{ route('inventory.maintenance.index') }}" class="btn btn-outline-secondary w-100">Cancel</a>
         </div>
     </div>
@@ -186,6 +185,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 $(document).ready(function(){
     $('.select2').select2({
@@ -194,42 +194,13 @@ $(document).ready(function(){
         width: '100%'
     });
 
-    // Get employee details when item is selected
-    $('#item_id').on('change', function(){
-        let itemId = $(this).val();
-
-        if(!itemId) {
-            $('#employeeDetailsContainer').hide();
-            $('#employee_id').val('');
-            return;
+    // Show/hide end date based on status
+    $('select[name="status"]').on('change', function(){
+        if($(this).val() == 'completed'){
+            $('#endDateContainer').slideDown();
+        } else {
+            $('#endDateContainer').slideUp();
         }
-
-        // ✅ FIXED: Use direct URL path instead of route helper
-        let url = '/dashboard/employees/inventory-maintenance/check-assignment/' + itemId;
-
-        $.get(url, function(res){
-            if(res.assigned && res.assignment) {
-                // Item is assigned, show employee details
-                $('#emp_name').text(res.assignment.employee?.fullname || 'N/A');
-                $('#emp_dept').text(res.assignment.department?.dep_name || 'N/A');
-                $('#assigned_date').text(res.assignment.assigned_date || 'N/A');
-                $('#employee_id').val(res.assignment.employee_id);
-                $('#employeeDetailsContainer').fadeIn();
-            } else {
-                // Item not assigned
-                $('#employeeDetailsContainer').hide();
-                $('#employee_id').val('');
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Item Not Assigned',
-                    text: 'This item is not currently assigned to any employee',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-        }).fail(function(){
-            $('#employeeDetailsContainer').hide();
-        });
     });
 });
 
@@ -257,13 +228,13 @@ function validate(input){
     let name = input.attr('name');
     clearError(input);
 
-    if(name == 'item_id' && !val){
-        showError(input,'Item required');
+    if(name == 'maintenance_type' && !val){
+        showError(input,'Type required');
         return false;
     }
 
-    if(name == 'maintenance_type' && !val){
-        showError(input,'Type required');
+    if(name == 'status' && !val){
+        showError(input,'Status required');
         return false;
     }
 
@@ -295,7 +266,7 @@ function validate(input){
     }
 
     if(name == 'start_date' && !val){
-        showError(input,'Date required');
+        showError(input,'Start date required');
         return false;
     }
 
@@ -311,18 +282,20 @@ $('#maintenanceForm').submit(function(e){
 
     let valid = true;
     $('input, textarea, select').each(function(){
-        if(!validate($(this))) valid = false;
+        if($(this).attr('name') && !$(this).prop('disabled') && !validate($(this))) {
+            valid = false;
+        }
     });
 
     if(!valid) return;
 
     $.ajax({
-        url: '{{ route("inventory.maintenance.store") }}',
+        url: '{{ route("inventory.maintenance.update", $maintenance->id) }}',
         type: 'POST',
         data: $(this).serialize(),
         success: function(res){
             if(res.status){
-                Swal.fire('Success','Maintenance added successfully','success').then(()=>{
+                Swal.fire('Success','Maintenance updated successfully','success').then(()=>{
                     window.location.href = '{{ route("inventory.maintenance.index") }}';
                 });
             }
@@ -339,4 +312,5 @@ $('#maintenanceForm').submit(function(e){
     });
 });
 </script>
+
 </x-layout>

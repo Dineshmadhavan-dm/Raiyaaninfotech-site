@@ -7,12 +7,6 @@
         border: 1px solid #e5e7eb;
         border-radius: 8px;
         background: #ffffff;
-        transition: all 0.3s ease;
-    }
-
-    .accessory-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
     }
 
     .badge-assigned {
@@ -77,62 +71,6 @@
         color: #111827;
     }
 
-    /* Maintenance Tracking Styles */
-    .maintenance-stats {
-        background: #f0fdf4;
-        border: 1px solid #dcfce7;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-    }
-
-    .maintenance-stat-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
-    }
-
-    .maintenance-stat-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .stat-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #166534;
-        text-transform: uppercase;
-    }
-
-    .stat-value {
-        font-size: 12px;
-        font-weight: 500;
-        color: #14532d;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 500;
-    }
-
-    .status-pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .status-completed {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .status-in-progress {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
     .btn-maintenance {
         background: #2563eb;
         border: none;
@@ -141,7 +79,7 @@
         font-size: 13px;
         font-weight: 500;
         color: white;
-        flex: 1;
+        width: 50%;
     }
 
     .btn-maintenance:disabled {
@@ -151,22 +89,6 @@
 
     .btn-maintenance:hover:not(:disabled) {
         background: #1d4ed8;
-    }
-
-    .btn-view-history {
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #374151;
-        transition: all 0.2s;
-    }
-
-    .btn-view-history:hover {
-        background: #e5e7eb;
-        border-color: #d1d5db;
     }
 
     /* Filter Section */
@@ -218,7 +140,7 @@
         background: #e5e7eb;
     }
 
-    /* Pagination */
+    /* Pagination - Fixed */
     .custom-pagination {
         margin-top: 30px;
         display: flex;
@@ -275,6 +197,16 @@
         cursor: auto;
         background-color: #fff;
         border-color: #e5e7eb;
+    }
+
+    .custom-pagination .page-item:first-child .page-link {
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+    }
+
+    .custom-pagination .page-item:last-child .page-link {
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
     }
 
     .entries-info {
@@ -343,15 +275,6 @@
         width: auto;
         display: inline-block;
         margin-left: 8px;
-    }
-
-    .history-table {
-        font-size: 13px;
-    }
-
-    .history-table td, .history-table th {
-        padding: 10px;
-        vertical-align: middle;
     }
 </style>
 
@@ -431,62 +354,6 @@
                                 </span>
                             </div>
 
-                            <!-- MAINTENANCE TRACKING SECTION -->
-                            <div class="maintenance-stats">
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label">
-                                        <i class="bi bi-bar-chart-steps me-1"></i>Total Maintenance
-                                    </span>
-                                    <span class="stat-value">
-                                        <strong>{{ $assignment->maintenance_count }}</strong> time(s)
-                                    </span>
-                                </div>
-
-                                @if($assignment->last_tracking_id)
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label">
-                                        <i class="bi bi-upc-scan me-1"></i>Last Tracking ID
-                                    </span>
-                                    <span class="stat-value">
-                                        <code style="font-size: 11px;">{{ $assignment->last_tracking_id }}</code>
-                                    </span>
-                                </div>
-
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label">
-                                        <i class="bi bi-calendar3 me-1"></i>Last Request
-                                    </span>
-                                    <span class="stat-value">
-                                        {{ \Carbon\Carbon::parse($assignment->last_maintenance_date)->format('d M Y') }}
-                                    </span>
-                                </div>
-
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label">
-                                        <i class="bi bi-info-circle me-1"></i>Last Status
-                                    </span>
-                                    <span class="stat-value">
-                                        <span class="status-badge
-                                            @if($assignment->last_maintenance_status == 'pending') status-pending
-                                            @elseif($assignment->last_maintenance_status == 'completed') status-completed
-                                            @elseif($assignment->last_maintenance_status == 'in_progress') status-in-progress
-                                            @endif">
-                                            {{ ucfirst(str_replace('_', ' ', $assignment->last_maintenance_status)) }}
-                                        </span>
-                                    </span>
-                                </div>
-                                @else
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label text-muted">
-                                        <i class="bi bi-info-circle me-1"></i>Maintenance History
-                                    </span>
-                                    <span class="stat-value text-muted">
-                                        No maintenance records
-                                    </span>
-                                </div>
-                                @endif
-                            </div>
-
                             <div class="info-row">
                                 <div class="info-label">Item Type</div>
                                 <div class="info-value">
@@ -519,41 +386,31 @@
                                 </div>
                             @endif
 
-                            <div class="d-flex gap-2 mt-3">
-                                @if($assignment->has_pending_maintenance)
-                                    <button type="button"
-                                            class="btn btn-maintenance"
-                                            disabled
-                                            style="background: #9ca3af;">
-                                        <i class="bi bi-clock-history me-2"></i>Pending Request
-                                    </button>
-                                @else
-                                    <button type="button"
-                                            class="btn btn-maintenance"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#maintenanceModal"
-                                            data-item-id="{{ $assignment->item_id }}"
-                                            data-item-name="{{ $assignment->item->item_name }}"
-                                            data-item-code="{{ $assignment->item->item_code }}">
-                                        <i class="bi bi-tools me-2"></i>Request Maintenance
-                                    </button>
-                                @endif
-
-                                @if($assignment->maintenance_count > 0)
-                                    <button type="button"
-                                            class="btn-view-history"
-                                            onclick="viewMaintenanceHistory({{ $assignment->item_id }}, '{{ addslashes($assignment->item->item_name) }}')">
-                                        <i class="bi bi-clock-history me-1"></i>History
-                                    </button>
-                                @endif
-                            </div>
+                            @if($assignment->has_pending_maintenance)
+                                <button type="button"
+                                        class="btn btn-maintenance"
+                                        disabled
+                                        style="background: #9ca3af;">
+                                    <i class="bi bi-clock-history me-2"></i>Pending Request
+                                </button>
+                            @else
+                                <button type="button"
+                                        class="btn btn-maintenance"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#maintenanceModal"
+                                        data-item-id="{{ $assignment->item_id }}"
+                                        data-item-name="{{ $assignment->item->item_name }}"
+                                        data-item-code="{{ $assignment->item->item_code }}">
+                                    <i class="bi bi-tools me-2"></i>Request Maintenance
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>
             @endforeach
         </div>
 
-        <!-- Pagination -->
+        <!-- Pagination - Fixed -->
         <div class="custom-pagination">
             {{ $assignments->links('pagination::bootstrap-4') }}
         </div>
@@ -770,107 +627,6 @@ $(document).ready(function() {
         });
     });
 });
-
-// View maintenance history function
-function viewMaintenanceHistory(itemId, itemName) {
-    Swal.fire({
-        title: 'Loading...',
-        text: 'Please wait while we fetch maintenance history',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    $.ajax({
-        url: '{{ route("employee.maintenance.history") }}',
-        type: 'GET',
-        data: { item_id: itemId },
-        success: function(response) {
-            Swal.close();
-
-            if (response.status && response.data.length > 0) {
-                let historyHtml = '<div style="max-height: 500px; overflow-y: auto;">';
-                historyHtml += '<table class="table table-sm history-table">';
-                historyHtml += '<thead style="position: sticky; top: 0; background: white;">';
-                historyHtml += '<tr>';
-                historyHtml += '<th>Tracking ID</th>';
-                historyHtml += '<th>Date</th>';
-                historyHtml += '<th>Type</th>';
-                historyHtml += '<th>Status</th>';
-                historyHtml += '<th>Issue</th>';
-                historyHtml += '</tr>';
-                historyHtml += '</thead><tbody>';
-
-                response.data.forEach(function(maintenance) {
-                    let trackingId = 'MNT-' + String(maintenance.id).padStart(6, '0');
-                    let date = new Date(maintenance.created_at).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    });
-
-                    let statusClass = '';
-                    let statusText = maintenance.status;
-
-                    if (maintenance.status === 'pending') {
-                        statusClass = 'status-pending';
-                        statusText = 'Pending';
-                    } else if (maintenance.status === 'completed') {
-                        statusClass = 'status-completed';
-                        statusText = 'Completed';
-                    } else if (maintenance.status === 'in_progress') {
-                        statusClass = 'status-in-progress';
-                        statusText = 'In Progress';
-                    }
-
-                    let issueText = maintenance.issue_description;
-                    if (issueText.length > 50) {
-                        issueText = issueText.substring(0, 50) + '...';
-                    }
-
-                    historyHtml += `<tr>
-                        <td><code style="font-size: 11px;">${trackingId}</code></td>
-                        <td>${date}</td>
-                        <td><span class="badge bg-secondary">${maintenance.maintenance_type}</span></td>
-                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                        <td title="${maintenance.issue_description.replace(/"/g, '&quot;')}">${issueText}</td>
-                    </tr>`;
-                });
-
-                historyHtml += '</tbody></table></div>';
-
-                Swal.fire({
-                    title: `<i class="bi bi-clock-history me-2"></i>Maintenance History - ${itemName}`,
-                    html: historyHtml,
-                    icon: '',
-                    width: '900px',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'Close',
-                    customClass: {
-                        popup: 'history-popup'
-                    }
-                });
-            } else {
-                Swal.fire({
-                    title: 'No History',
-                    html: '<i class="bi bi-inbox" style="font-size: 48px; color: #9ca3af;"></i><br><p class="mt-2">No maintenance records found for this item</p>',
-                    icon: 'info',
-                    confirmButtonColor: '#2563eb'
-                });
-            }
-        },
-        error: function() {
-            Swal.close();
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to load maintenance history. Please try again.',
-                icon: 'error',
-                confirmButtonColor: '#dc3545'
-            });
-        }
-    });
-}
 </script>
 
 </x-layout>
