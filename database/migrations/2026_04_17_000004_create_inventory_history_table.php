@@ -11,9 +11,12 @@ return new class extends Migration {
             $table->foreignId('item_id')->constrained('inventory_items')->cascadeOnDelete();
            $table->unsignedBigInteger('employee_id')->nullable();
             $table->enum('action_type', ['created','assigned','returned','damaged','repaired']);
-            $table->string('old_status')->nullable();
-            $table->string('new_status')->nullable();
-            $table->text('notes')->nullable();
+
+$table->tinyInteger('action_type')
+      ->default(0)
+      ->comment('0=assigned,1=returned,2=scrap,3=service,4=upgrade');
+
+
             $table->timestamp('action_date')->useCurrent();
             $table->foreign('employee_id')
       ->references('emp_id')

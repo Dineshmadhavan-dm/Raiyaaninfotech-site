@@ -12,8 +12,14 @@ class InventoryAssignment extends Model
         'assigned_date',
         'return_date',
         'status',
+        'condition_status',
         'remarks',
     ];
+
+    protected $casts = [
+    'status' => 'integer',
+    'condition_status' => 'integer',
+];
 
     public function item()
     {

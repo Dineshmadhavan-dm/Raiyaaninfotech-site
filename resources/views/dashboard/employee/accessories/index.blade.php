@@ -408,6 +408,130 @@
             </div>
         </form>
     </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0">
+        <i class="bi bi-box-seam me-2"></i>My Accessories
+    </h6>
+
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="toggleScrap">
+        <label class="form-check-label small" for="toggleScrap">
+            Show Scrapped Items
+        </label>
+    </div>
+</div>
+
+<div class="scrap-card mb-3" id="scrapSection">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold text-danger small">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            Scrapped
+        </span>
+        <span class="badge bg-danger small">{{ $scrappedItems->count() }}</span>
+    </div>
+
+    @if($scrappedItems->count() > 0)
+        <div class="scrap-list">
+            @foreach($scrappedItems as $s)
+                <div class="scrap-item">
+                    <div>
+                        <div class="fw-semibold small">
+                            {{ $s->item->item_name }}
+                        </div>
+                        <div class="text-muted" style="font-size:11px;">
+                            {{ $s->item->item_code }}
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <span class="badge bg-danger" style="font-size:10px;">Scrap</span>
+                        <div class="text-muted" style="font-size:10px;">
+                            {{ \Carbon\Carbon::parse($s->created_at)->format('d M') }}
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="text-center text-muted small py-2">
+            No scrapped items
+        </div>
+    @endif
+</div>
+
+<style>
+  .scrap-card {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* 🔥 SCROLL AFTER ~5 ITEMS */
+.scrap-list {
+    max-height: 220px;   /* approx 5 items */
+    overflow-y: auto;
+}
+
+/* Thin scrollbar (optional) */
+.scrap-list::-webkit-scrollbar {
+    width: 4px;
+}
+.scrap-list::-webkit-scrollbar-thumb {
+    background: #fca5a5;
+    border-radius: 10px;
+}
+
+.scrap-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: 1px solid #fee2e2;
+}
+
+.scrap-item:last-child {
+    border-bottom: none;
+}
+
+#scrapSection {
+    display: none;
+}
+</style>
+
+<script>
+    $(document).ready(function(){
+
+    // 🔹 Load saved state
+    let showScrap = localStorage.getItem('showScrap') === 'true';
+
+    if(showScrap){
+        $('#toggleScrap').prop('checked', true);
+        $('#scrapSection').show();
+    } else {
+        $('#scrapSection').hide();
+    }
+
+    // 🔹 Toggle change
+    $('#toggleScrap').change(function(){
+        let isOn = $(this).is(':checked');
+
+        localStorage.setItem('showScrap', isOn);
+
+        if(isOn){
+            $('#scrapSection').stop(true,true).slideDown();
+        } else {
+            $('#scrapSection').stop(true,true).slideUp();
+        }
+
+        // 🔥 Optional label change
+        $(this).next('label').text(
+            isOn ? 'Hide Scrapped Items' : 'Show Scrapped Items'
+        );
+    });
+
+});
+</script>
 
     <!-- Cards Grid -->
     @if($assignments->count() > 0)
@@ -461,20 +585,25 @@
                                     </span>
                                 </div>
 
-                                <div class="maintenance-stat-item">
-                                    <span class="stat-label">
-                                        <i class="bi bi-info-circle me-1"></i>Last Status
-                                    </span>
-                                    <span class="stat-value">
-                                        <span class="status-badge
-                                            @if($assignment->last_maintenance_status == 'pending') status-pending
-                                            @elseif($assignment->last_maintenance_status == 'completed') status-completed
-                                            @elseif($assignment->last_maintenance_status == 'in_progress') status-in-progress
-                                            @endif">
-                                            {{ ucfirst(str_replace('_', ' ', $assignment->last_maintenance_status)) }}
-                                        </span>
-                                    </span>
-                                </div>
+                               @php
+$statusMap = [
+    0 => ['Pending', 'status-pending'],
+    1 => ['Completed', 'status-completed'],
+];
+
+$status = $statusMap[$assignment->last_maintenance_status] ?? ['Unknown',''];
+@endphp
+
+<div class="maintenance-stat-item">
+    <span class="stat-label">
+        <i class="bi bi-info-circle me-1"></i>Last Status
+    </span>
+    <span class="stat-value">
+        <span class="status-badge {{ $status[1] }}">
+            {{ $status[0] }}
+        </span>
+    </span>
+</div>
                                 @else
                                 <div class="maintenance-stat-item">
                                     <span class="stat-label text-muted">
@@ -489,9 +618,16 @@
 
                             <div class="info-row">
                                 <div class="info-label">Item Type</div>
-                                <div class="info-value">
-                                    {{ ucfirst($assignment->item->item_type ?? 'Standard') }}
-                                </div>
+                               @php
+$typeMap = [
+    0 => 'New',
+    1 => 'Refurbished'
+];
+@endphp
+
+<div class="info-value">
+    {{ $typeMap[$assignment->item->item_type] ?? 'Standard' }}
+</div>
                             </div>
 
                             <div class="info-row">
@@ -617,12 +753,11 @@
                         <label class="form-label fw-semibold mb-2">
                             Maintenance Type <span class="text-danger">*</span>
                         </label>
-                        <select name="maintenance_type" class="form-select">
-                            <option value="">Select Type</option>
-                            <option value="service">Service / Repair</option>
-                            <option value="upgrade">Upgrade</option>
-                            <option value="scrap">Scrap / Damaged</option>
-                        </select>
+                       <select name="maintenance_type" class="form-select">
+    <option value="">Select Type</option>
+    <option value="1">Service</option>
+    <option value="2">Upgrade</option>
+</select>
                     </div>
 
                     <div class="mb-3">
@@ -802,6 +937,8 @@ function viewMaintenanceHistory(itemId, itemName) {
                 historyHtml += '</tr>';
                 historyHtml += '</thead><tbody>';
 
+
+
                 response.data.forEach(function(maintenance) {
                     let trackingId = 'MNT-' + String(maintenance.id).padStart(6, '0');
                     let date = new Date(maintenance.created_at).toLocaleDateString('en-GB', {
@@ -810,18 +947,24 @@ function viewMaintenanceHistory(itemId, itemName) {
                         year: 'numeric'
                     });
 
+
+                                        let typeMap = {
+   0: { text: 'Scrap', class: 'bg-danger' },
+    1: { text: 'Service', class: 'bg-primary' },
+    2: { text: 'Upgrade', class: 'bg-info' }
+};
+
+let type = typeMap[maintenance.maintenance_type] || { text: 'Unknown', class: 'bg-secondary' };
+
                     let statusClass = '';
                     let statusText = maintenance.status;
 
-                    if (maintenance.status === 'pending') {
+                    if (maintenance.status === 0) {
                         statusClass = 'status-pending';
                         statusText = 'Pending';
-                    } else if (maintenance.status === 'completed') {
+                    } else if (maintenance.status === 1) {
                         statusClass = 'status-completed';
                         statusText = 'Completed';
-                    } else if (maintenance.status === 'in_progress') {
-                        statusClass = 'status-in-progress';
-                        statusText = 'In Progress';
                     }
 
                     let issueText = maintenance.issue_description;
@@ -832,7 +975,12 @@ function viewMaintenanceHistory(itemId, itemName) {
                     historyHtml += `<tr>
                         <td><code style="font-size: 11px;">${trackingId}</code></td>
                         <td>${date}</td>
-                        <td><span class="badge bg-secondary">${maintenance.maintenance_type}</span></td>
+
+<td>
+    <span class="badge ${type.class}">
+        ${type.text}
+    </span>
+</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td title="${maintenance.issue_description.replace(/"/g, '&quot;')}">${issueText}</td>
                     </tr>`;
@@ -871,6 +1019,9 @@ function viewMaintenanceHistory(itemId, itemName) {
         }
     });
 }
+
+
+
 </script>
 
 </x-layout>

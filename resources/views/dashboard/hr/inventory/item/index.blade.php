@@ -4,14 +4,18 @@
     <div class="container-fluid p-4">
 
         <!-- Header -->
-        <div class="d-flex justify-content-between mb-4">
-            <h3>Inventory Items</h3>
-
-            <a href="{{ route('inventory.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Add Item
-            </a>
-        </div>
-
+       <!-- Add this button next to the "Add Item" button -->
+<div class="d-flex justify-content-between mb-4">
+    <h3>Inventory Items</h3>
+    <div>
+        <button type="button" class="btn btn-success me-2" id="exportInventoryBtn">
+            <i class="bi bi-file-pdf"></i> Export PDF
+        </button>
+        <a href="{{ route('inventory.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Item
+        </a>
+    </div>
+</div>
 
         <form method="GET" action="{{ route('inventory.index') }}" class="row mb-3">
 
@@ -38,11 +42,11 @@
     </div>
 
   <div class="col-md-2">
-    <select name="item_type" class="form-control">
-        <option value="">All Item Type</option>
-        <option value="new" {{ request('item_type')=='new' ? 'selected' : '' }}>New</option>
-        <option value="refurbished" {{ request('item_type')=='refurbished' ? 'selected' : '' }}>Refurbished</option>
-    </select>
+  <select name="item_type" class="form-control">
+    <option value="">All</option>
+    <option value="0" {{ request('item_type')==='0' ? 'selected':'' }}>New</option>
+    <option value="1" {{ request('item_type')==='1' ? 'selected':'' }}>Refurbished</option>
+</select>
 </div>
 
     <div class="col-md-3">
@@ -114,16 +118,24 @@
 
                             <td>{{ $item->item_name }}</td>
                             <td>{{ $item->item_code }}</td>
-                            <td>{{ $item->category->category_name ?? '-' }}</td>
+                          @php
+$colors = ['bg-primary','bg-success','bg-warning text-dark','bg-info','bg-danger','bg-dark'];
 
-                           <td>
-    <span class="badge p-2
-        {{ $item->item_type == 'new' ? 'bg-primary' :
-           ($item->item_type == 'refurbished' ? 'bg-info' : 'bg-secondary') }}">
-        {{ ucfirst($item->item_type) }}
+$catId = $item->category->id ?? 0;
+$color = $colors[$catId % count($colors)];
+@endphp
+
+<td>
+    <span class="badge p-2 {{ $color }}">
+        {{ $item->category->category_name ?? '-' }}
     </span>
 </td>
-
+    <td>
+    <span class="badge p-2
+        {{ $item->item_type == 1 ? 'bg-info' : 'bg-primary' }}">
+        {{ $item->item_type == 1 ? 'Refurbished' : 'New' }}
+    </span>
+</td>
                             <td class="">
 
                                 <!-- VIEW -->
@@ -199,7 +211,6 @@ data-image="{{
         <h4 class="fw-bold mb-0">Inventory Invoice</h4>
         <small class="text-muted">System Generated</small>
     </div>
-    <span class="badge bg-success px-3 py-2" id="b_item_type"></span>
 </div>
 
 <div class="row">
@@ -297,14 +308,348 @@ data-image="{{
 
 <!-- FOOTER -->
 <div class="text-end mt-4">
-    <button onclick="window.print()" class="btn btn-success">
-        🖨 Print
-    </button>
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 </div>
 
 </div>
 </div>
 </div>
+
+
+
+
+
+
+
+<!-- Export Inventory Modal -->
+<div class="modal fade" id="exportInventoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Inventory Report (PDF)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Export Type - Multiple Categories / All -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Export Type</label>
+                    <div class="d-flex gap-4 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_type" id="exportAllRadio" value="all" checked>
+                            <label class="form-check-label" for="exportAllRadio">All Items</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_type" id="exportCategoryRadio" value="category">
+                            <label class="form-check-label" for="exportCategoryRadio">By Category</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_type" id="exportItemTypeRadio" value="item_type">
+                            <label class="form-check-label" for="exportItemTypeRadio">By Item Type</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Dropdown (shown when Category is selected) -->
+                <div class="mb-3 d-none" id="exportCategoryDiv">
+                    <label class="form-label fw-bold">Categories</label>
+                    <div class="dropdown w-100">
+                        <button class="form-select text-start" type="button" id="exportCategoryDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: white; text-align: left;">
+                            <span id="exportCategoryText">Select Categories</span>
+                        </button>
+                        <ul class="dropdown-menu p-2 w-100" aria-labelledby="exportCategoryDropdownBtn" style="max-height: 300px; overflow-y: auto;">
+                            <li>
+                                <input type="text" class="form-control form-control-sm mb-2" placeholder="Search categories..." id="exportCategorySearchInput">
+                            </li>
+                            <li class="d-flex justify-content-between px-2 mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="exportSelectAllCategories">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportDeselectAllCategories">Deselect All</button>
+                            </li>
+                            <li>
+                                <select id="exportCategorySelectList" class="form-select form-select-sm" size="6" multiple style="border: none;">
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                                    @endforeach
+                                </select>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Item Type Dropdown (shown when Item Type is selected) -->
+                <div class="mb-3 d-none" id="exportItemTypeDiv">
+                    <label class="form-label fw-bold">Item Type</label>
+                    <select id="exportItemTypeSelect" class="form-select">
+                        <option value="">Select Item Type</option>
+                        <option value="new">New</option>
+                        <option value="refurbished">Refurbished</option>
+                    </select>
+                </div>
+
+                <!-- Sort By Option -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Sort By</label>
+                    <select id="exportSortBy" class="form-select">
+                        <option value="item_name">Item Name</option>
+                        <option value="item_code">Item Code</option>
+                        <option value="category">Category</option>
+                        <option value="purchase_date">Purchase Date</option>
+                        <option value="purchase_cost">Cost</option>
+                    </select>
+                </div>
+
+                <!-- Sort Order -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Sort Order</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sort_order" id="sortAsc" value="asc" checked>
+                            <label class="form-check-label" for="sortAsc">Ascending</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sort_order" id="sortDesc" value="desc">
+                            <label class="form-check-label" for="sortDesc">Descending</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="exportFinalConfirmBtn">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+// ============================================
+// INVENTORY PDF EXPORT MODAL
+// ============================================
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initExportModal);
+    } else {
+        initExportModal();
+    }
+
+    function initExportModal() {
+        // Get DOM elements
+        const exportAllRadio = document.getElementById('exportAllRadio');
+        const exportCategoryRadio = document.getElementById('exportCategoryRadio');
+        const exportItemTypeRadio = document.getElementById('exportItemTypeRadio');
+        const exportCategoryDiv = document.getElementById('exportCategoryDiv');
+        const exportItemTypeDiv = document.getElementById('exportItemTypeDiv');
+        const exportBtn = document.getElementById('exportInventoryBtn');
+        const confirmBtn = document.getElementById('exportFinalConfirmBtn');
+
+        // Category dropdown elements
+        const exportCategorySelect = document.getElementById('exportCategorySelectList');
+        const exportCategoryText = document.getElementById('exportCategoryText');
+        const exportCategorySearch = document.getElementById('exportCategorySearchInput');
+        const exportSelectAllCategories = document.getElementById('exportSelectAllCategories');
+        const exportDeselectAllCategories = document.getElementById('exportDeselectAllCategories');
+
+        // Item type select
+        const exportItemTypeSelect = document.getElementById('exportItemTypeSelect');
+
+        // Toggle visibility based on export type
+        if (exportAllRadio && exportCategoryRadio && exportItemTypeRadio) {
+            exportAllRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    exportCategoryDiv.classList.add('d-none');
+                    exportItemTypeDiv.classList.add('d-none');
+                }
+            });
+
+            exportCategoryRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    exportCategoryDiv.classList.remove('d-none');
+                    exportItemTypeDiv.classList.add('d-none');
+                }
+            });
+
+            exportItemTypeRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    exportCategoryDiv.classList.add('d-none');
+                    exportItemTypeDiv.classList.remove('d-none');
+                }
+            });
+        }
+
+        // Update category button text
+        function updateExportCategoryText() {
+            if (!exportCategorySelect) return;
+            const selected = Array.from(exportCategorySelect.selectedOptions);
+
+            if (selected.length === 0) {
+                exportCategoryText.textContent = 'Select Categories';
+            } else if (selected.length === 1) {
+                exportCategoryText.textContent = selected[0].textContent;
+            } else {
+                exportCategoryText.textContent = selected.length + ' categories selected';
+            }
+        }
+
+        // Search categories
+        if (exportCategorySearch && exportCategorySelect) {
+            exportCategorySearch.addEventListener('input', function() {
+                const term = this.value.toLowerCase();
+                const options = exportCategorySelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    const text = options[i].textContent.toLowerCase();
+                    options[i].style.display = text.includes(term) ? '' : 'none';
+                }
+            });
+        }
+
+        // Select all categories
+        if (exportSelectAllCategories && exportCategorySelect) {
+            exportSelectAllCategories.addEventListener('click', function(e) {
+                e.preventDefault();
+                for (let i = 0; i < exportCategorySelect.options.length; i++) {
+                    exportCategorySelect.options[i].selected = true;
+                }
+                updateExportCategoryText();
+            });
+        }
+
+        // Deselect all categories
+        if (exportDeselectAllCategories && exportCategorySelect) {
+            exportDeselectAllCategories.addEventListener('click', function(e) {
+                e.preventDefault();
+                for (let i = 0; i < exportCategorySelect.options.length; i++) {
+                    exportCategorySelect.options[i].selected = false;
+                }
+                updateExportCategoryText();
+            });
+        }
+
+        if (exportCategorySelect) {
+            exportCategorySelect.addEventListener('change', updateExportCategoryText);
+        }
+
+        // Open modal button
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                const exportModal = new bootstrap.Modal(document.getElementById('exportInventoryModal'));
+                exportModal.show();
+            });
+        }
+
+        // Reset modal when opened
+        const exportModalElement = document.getElementById('exportInventoryModal');
+        if (exportModalElement) {
+            exportModalElement.addEventListener('show.bs.modal', function() {
+                // Reset to default
+                if (exportAllRadio) exportAllRadio.checked = true;
+                if (exportCategoryDiv) exportCategoryDiv.classList.add('d-none');
+                if (exportItemTypeDiv) exportItemTypeDiv.classList.add('d-none');
+
+                // Reset category selection
+                if (exportCategorySelect) {
+                    for (let i = 0; i < exportCategorySelect.options.length; i++) {
+                        exportCategorySelect.options[i].selected = false;
+                    }
+                    updateExportCategoryText();
+                }
+
+                // Reset item type
+                if (exportItemTypeSelect) exportItemTypeSelect.value = '';
+
+                // Reset search
+                if (exportCategorySearch) exportCategorySearch.value = '';
+
+                // Reset sort order
+                const sortAsc = document.getElementById('sortAsc');
+                if (sortAsc) sortAsc.checked = true;
+
+                const sortBy = document.getElementById('exportSortBy');
+                if (sortBy) sortBy.value = 'item_name';
+            });
+        }
+
+        // Generate PDF on confirm
+        if (confirmBtn) {
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.addEventListener('click', function() {
+                const exportType = document.querySelector('input[name="export_type"]:checked').value;
+                let params = new URLSearchParams();
+
+                params.append('export_type', exportType);
+
+                // Category filter
+                if (exportType === 'category' && exportCategorySelect) {
+                    const selectedCategories = Array.from(exportCategorySelect.selectedOptions).map(opt => opt.value);
+                    if (selectedCategories.length > 0) {
+                        selectedCategories.forEach(id => {
+                            params.append('category_ids[]', id);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            text: 'Please select at least one category',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                        return;
+                    }
+                }
+
+                // Item type filter
+                if (exportType === 'item_type' && exportItemTypeSelect) {
+                    const itemType = exportItemTypeSelect.value;
+                    if (!itemType) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            text: 'Please select an item type',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                        return;
+                    }
+                    params.append('item_type', itemType);
+                }
+
+                // Sort by
+                const sortBy = document.getElementById('exportSortBy');
+                if (sortBy) {
+                    params.append('sort_by', sortBy.value);
+                }
+
+                // Sort order
+                const sortOrder = document.querySelector('input[name="sort_order"]:checked');
+                if (sortOrder) {
+                    params.append('sort_order', sortOrder.value);
+                }
+
+                // Close modal
+                const exportModal = bootstrap.Modal.getInstance(document.getElementById('exportInventoryModal'));
+                if (exportModal) exportModal.hide();
+
+                // Download PDF
+                window.location.href = "{{ route('inventory.export-pdf') }}?" + params.toString();
+            });
+        }
+
+        // Initialize category text
+        updateExportCategoryText();
+    }
+})();
+</script>
+
+
+
+
 
 <script>
 // VIEW
@@ -317,7 +662,7 @@ $(document).on('click','.view-btn',function(){
     $('#b_name').text($(this).data('name'));
     $('#b_code').text($(this).data('code'));
     $('#b_category').text($(this).data('category'));
-    $('#b_item_type').text($(this).data('item_type'));
+
 
     $('#b_brand').text($(this).data('brand'));
     $('#b_model').text($(this).data('model'));

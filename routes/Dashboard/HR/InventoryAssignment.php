@@ -11,6 +11,12 @@ Route::prefix('inventory-assignments')->group(function () {
 
     Route::post('/', [InventoryAssignmentController::class, 'store'])->name('inventory.assignments.store');
 
+
+
+
+    Route::get('/export-pdf', [InventoryAssignmentController::class, 'exportPdf'])
+    ->name('inventory.assignments.export-pdf');
+
     Route::get('/{id}', [InventoryAssignmentController::class, 'show'])->name('inventory.assignments.show');
 
     // 🔥 SPECIAL ROUTE (RETURN)
@@ -22,4 +28,6 @@ Route::prefix('inventory-assignments')->group(function () {
     ->name('inventory.assignments.getEmployees');
 
     Route::get('/check-item/{id}', [InventoryAssignmentController::class,'checkItem']);
+
+
 });

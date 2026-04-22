@@ -30,7 +30,7 @@ class AccessoriesController extends Controller
         // Build query with filters
         $query = InventoryAssignment::with(['item', 'department'])
             ->where('employee_id', $employeeId)
-            ->where('status', 'assigned');
+            ->where('status', 0);
 
         // Filter by item name
         if ($request->filled('item')) {
@@ -54,7 +54,7 @@ class AccessoriesController extends Controller
         foreach ($assignments as $assignment) {
             // Check for pending maintenance
             $hasPendingMaintenance = InventoryMaintenance::where('item_id', $assignment->item_id)
-                ->where('status', 'pending')
+                ->where('status', 0)
                 ->exists();
             $assignment->has_pending_maintenance = $hasPendingMaintenance;
 
@@ -82,7 +82,18 @@ class AccessoriesController extends Controller
             }
         }
 
-        return view('dashboard.employee.accessories.index', compact('assignments', 'employeeId'));
+        $scrappedItems = InventoryMaintenance::where('maintenance_type', 0) // scrap
+    ->where('status', 1) // completed
+    ->where('employee_id', $employeeId)
+    ->with('item')
+    ->latest()
+    ->take(3)
+    ->get();
+      return view('dashboard.employee.accessories.index', compact(
+    'assignments',
+    'employeeId',
+    'scrappedItems'
+));
     }
 
     // Method to request maintenance from employee side
@@ -91,7 +102,7 @@ class AccessoriesController extends Controller
         $request->validate([
             'item_id' => 'required|exists:inventory_items,id',
             'issue_description' => 'required|min:5|max:500',
-            'maintenance_type' => 'required|in:service,upgrade,scrap',
+             'maintenance_type' => 'required|in:0,1,2',
             'remarks' => 'nullable|max:300',
         ]);
 
@@ -120,7 +131,7 @@ class AccessoriesController extends Controller
         // Verify the item is assigned to this employee
         $assignment = InventoryAssignment::where('item_id', $request->item_id)
             ->where('employee_id', $employeeId)
-            ->where('status', 'assigned')
+            ->where('status', 0)
             ->first();
 
         if (!$assignment) {
@@ -132,7 +143,7 @@ class AccessoriesController extends Controller
 
         // Check if there's already a pending maintenance for this item
         $existingMaintenance = InventoryMaintenance::where('item_id', $request->item_id)
-            ->where('status', 'pending')
+            ->where('status', 0)
             ->first();
 
         if ($existingMaintenance) {
@@ -151,7 +162,7 @@ class AccessoriesController extends Controller
             'cost' => 0,
             'vendor_name' => null,
             'start_date' => now(),
-            'status' => 'pending',
+            'status' => 0,
             'remarks' => $request->remarks,
         ]);
 
@@ -193,7 +204,7 @@ class AccessoriesController extends Controller
         // Check if item is assigned to this employee
         $isAssigned = InventoryAssignment::where('item_id', $itemId)
             ->where('employee_id', $employeeId)
-            ->where('status', 'assigned')
+            ->where('status', 0)
             ->exists();
 
         if (!$isAssigned) {

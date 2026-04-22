@@ -36,10 +36,7 @@ class InventoryHistoryController extends Controller
         $query->where('action_type', $request->action);
     }
 
-    // 🔍 FILTER STATUS
-    if ($request->filled('status')) {
-        $query->where('new_status', $request->status);
-    }
+
 
     $perPage = $request->get('per_page', 5);
 

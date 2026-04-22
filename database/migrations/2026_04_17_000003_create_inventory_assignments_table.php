@@ -14,9 +14,19 @@ return new class extends Migration {
     $table->unsignedBigInteger('department_id');
     $table->date('assigned_date');
     $table->date('return_date')->nullable();
-    $table->enum('status', ['assigned','returned'])->default('assigned');
+
+    $table->tinyInteger('status')
+          ->default(0)
+          ->comment('0=assigned,1=returned');
+
+
+
     $table->text('remarks')->nullable();
     $table->timestamps();
+
+    $table->tinyInteger('condition_status')
+          ->default(1)
+          ->comment('0=scrap,1=active');
     $table->foreign('item_id')->references('id')->on('inventory_items')->cascadeOnDelete();
     $table->foreign('employee_id')->references('emp_id')->on('employees')->cascadeOnDelete();
     $table->foreign('department_id')->references('dep_id')->on('departments')->cascadeOnDelete();

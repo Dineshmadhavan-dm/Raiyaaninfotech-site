@@ -17,6 +17,9 @@ Route::prefix('inventory')->group(function () {
 
     Route::delete('/{id}', [InventoryItemController::class, 'destroy'])->name('inventory.destroy');
 
+     Route::get('/export-pdf', [InventoryItemController::class, 'exportPdf'])->name('inventory.export-pdf');
     Route::get('/{id}', [InventoryItemController::class, 'show'])->name('inventory.show');
+
+
 
 });

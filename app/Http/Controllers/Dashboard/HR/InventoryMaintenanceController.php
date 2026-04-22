@@ -65,32 +65,62 @@ class InventoryMaintenanceController extends Controller
         $request->validate([
             'item_id' => 'required|exists:inventory_items,id',
             'issue_description' => 'required|min:5|max:500',
-            'maintenance_type' => 'required|in:scrap,service,upgrade',
+            'maintenance_type' => 'required|in:0,1,2',
             'cost' => 'required|numeric|min:0',
             'vendor_name' => 'required|min:2',
             'start_date' => 'required|date',
             'remarks' => 'nullable|max:500',
         ]);
 
-        $maintenance = InventoryMaintenance::create([
-            'item_id' => $request->item_id,
-            'employee_id' => $request->employee_id,
-            'issue_description' => $request->issue_description,
-            'maintenance_type' => $request->maintenance_type,
-            'cost' => $request->cost,
-            'vendor_name' => $request->vendor_name,
-            'start_date' => $request->start_date,
-            'status' => 'pending',
-            'remarks' => $request->remarks,
+   $data = [
+    'item_id' => $request->item_id,
+    'employee_id' => $request->employee_id,
+    'issue_description' => $request->issue_description,
+    'maintenance_type' => $request->maintenance_type,
+    'cost' => $request->cost,
+    'vendor_name' => $request->vendor_name,
+    'start_date' => $request->start_date,
+    'status' => 0,
+    'remarks' => $request->remarks,
+];
+
+// ✅ DOCUMENT UPLOAD
+if ($request->hasFile('document_file')) {
+    $file = $request->file('document_file');
+    $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
+    $file->move(public_path('maintenance_docs'), $filename);
+    $data['document'] = $filename;
+}
+
+$maintenance = InventoryMaintenance::create($data);
+// 🔥 IF SCRAP → AUTO RETURN + MARK SCRAP
+if ($request->maintenance_type == 0) {
+
+    $assignments = InventoryAssignment::where('item_id', $request->item_id)
+        ->where('status', 0)
+        ->get();
+
+    foreach ($assignments as $assignment) {
+
+        $assignment->update([
+            'status' => 1, // returned
+            'condition_status' => 0, // scrap
+            'return_date' => now()
         ]);
 
+        // ✅ ADD HISTORY (IMPORTANT 🔥)
+        InventoryHistory::create([
+            'item_id' => $assignment->item_id,
+            'employee_id' => $assignment->employee_id,
+            'action_type' => 1, // returned
+            'action_date' => now(),
+        ]);
+    }
+}
         InventoryHistory::create([
             'item_id' => $request->item_id,
             'employee_id' => $request->employee_id,
-            'action_type' => 'maintenance',
-            'old_status' => 'assigned',
-            'new_status' => 'maintenance',
-            'notes' => $request->issue_description,
+            'action_type' => $request->maintenance_type,
             'action_date' => now(),
         ]);
 
@@ -113,23 +143,60 @@ class InventoryMaintenanceController extends Controller
         $maintenance = InventoryMaintenance::findOrFail($id);
 
         $request->validate([
-            'maintenance_type' => 'required|in:scrap,service,upgrade',
+            'maintenance_type' => 'required|in:0,1,2',
             'issue_description' => 'required|min:5|max:500',
             'cost' => 'required|numeric|min:0',
             'vendor_name' => 'required|min:2',
             'start_date' => 'required|date',
-            'status' => 'required|in:pending,completed',
+            'status' => 'required|in:0,1',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'remarks' => 'nullable|max:500',
         ]);
 
-        $data = $request->except('_token', '_method');
+    $data = $request->except('_token', '_method');
 
-        if ($request->status == 'pending') {
-            $data['end_date'] = null;
-        }
+// ✅ DOCUMENT UPLOAD
+if ($request->hasFile('document_file')) {
+    $file = $request->file('document_file');
+    $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
+    $file->move(public_path('maintenance_docs'), $filename);
 
-        $maintenance->update($data);
+    if ($maintenance->document && file_exists(public_path('maintenance_docs/'.$maintenance->document))) {
+        unlink(public_path('maintenance_docs/'.$maintenance->document));
+    }
+
+    $data['document'] = $filename;
+}
+
+// reset end date
+if ($request->status == 0) {
+    $data['end_date'] = null;
+}
+
+$maintenance->update($data);
+
+if ($request->maintenance_type == 0) {
+
+    $assignments = InventoryAssignment::where('item_id', $maintenance->item_id)
+        ->where('status', 0)
+        ->get();
+
+    foreach ($assignments as $assignment) {
+
+        $assignment->update([
+            'status' => 1,
+            'condition_status' => 0,
+            'return_date' => now()
+        ]);
+
+        InventoryHistory::create([
+            'item_id' => $assignment->item_id,
+            'employee_id' => $assignment->employee_id,
+            'action_type' => 1,
+            'action_date' => now(),
+        ]);
+    }
+}
 
         return response()->json([
             'status' => true,
@@ -137,40 +204,7 @@ class InventoryMaintenanceController extends Controller
         ]);
     }
 
-    public function complete($id)
-    {
-        $maintenance = InventoryMaintenance::findOrFail($id);
 
-        if ($maintenance->status == 'completed') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Already completed'
-            ]);
-        }
-
-        $maintenance->status = 'completed';
-
-        if (!$maintenance->end_date) {
-            $maintenance->end_date = now();
-        }
-
-        $maintenance->save();
-
-        InventoryHistory::create([
-            'item_id' => $maintenance->item_id,
-            'employee_id' => $maintenance->employee_id,
-            'action_type' => 'maintenance',
-            'old_status' => 'maintenance',
-            'new_status' => 'available',
-            'notes' => 'Maintenance completed: ' . $maintenance->issue_description,
-            'action_date' => now(),
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Maintenance completed'
-        ]);
-    }
 
     public function show($id)
     {
@@ -185,7 +219,7 @@ class InventoryMaintenanceController extends Controller
     public function checkItemAssignment($itemId)
     {
         $assignment = InventoryAssignment::where('item_id', $itemId)
-            ->where('status', 'assigned')
+            ->where('status', 0)
             ->with(['employee', 'department'])
             ->first();
 

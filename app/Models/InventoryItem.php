@@ -26,6 +26,9 @@ class InventoryItem extends Model
         'description',
         'remarks',
     ];
+protected $casts = [
+    'item_type' => 'integer',
+];
 
     public function category()
     {

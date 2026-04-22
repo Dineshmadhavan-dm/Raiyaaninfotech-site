@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->date('warranty_expiry')->nullable();
 
             $table->integer('quantity')->default(1);
-          $table->enum('item_type', ['new', 'refurbished'])->default('new');
+       $table->tinyInteger('item_type') ->default(0) ->comment('0=new,1=refurbished');
             $table->text('description')->nullable();
             $table->text('remarks')->nullable();
             $table->string('item_image')->nullable();

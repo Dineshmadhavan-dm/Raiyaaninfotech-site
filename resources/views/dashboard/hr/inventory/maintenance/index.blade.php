@@ -20,20 +20,20 @@
         </div>
 
         <div class="col-md-3">
-            <select name="type" class="form-control">
-                <option value="">All Type</option>
-                <option value="scrap" {{ request('type')=='scrap' ? 'selected' : '' }}>Scrap</option>
-                <option value="service" {{ request('type')=='service' ? 'selected' : '' }}>Service</option>
-                <option value="upgrade" {{ request('type')=='upgrade' ? 'selected' : '' }}>Upgrade</option>
-            </select>
+           <select name="type" class="form-control">
+    <option value="">All Type</option>
+    <option value="0" {{ request('type')==='0' ? 'selected' : '' }}>Scrap</option>
+    <option value="1" {{ request('type')==='1' ? 'selected' : '' }}>Service</option>
+    <option value="2" {{ request('type')==='2' ? 'selected' : '' }}>Upgrade</option>
+</select>
         </div>
 
         <div class="col-md-2">
-            <select name="status" class="form-control">
-                <option value="">All Status</option>
-                <option value="pending" {{ request('status')=='pending'?'selected':'' }}>Pending</option>
-                <option value="completed" {{ request('status')=='completed'?'selected':'' }}>Completed</option>
-            </select>
+           <select name="status" class="form-control">
+    <option value="">All Status</option>
+    <option value="0" {{ request('status')==='0' ? 'selected' : '' }}>Pending</option>
+    <option value="1" {{ request('status')==='1' ? 'selected' : '' }}>Complete</option>
+</select>
         </div>
 
         <div class="col-md-4">
@@ -82,12 +82,20 @@
                         <tr>
                             <td>{{ $maintenances->firstItem() + $index }}</td>
                             <td>{{ $m->item->item_name ?? '-' }}</td>
-                            <td>{{ ucfirst($m->maintenance_type) }}</td>
-                            <td>
-                                <span class="badge p-2 {{ $m->status == 'completed' ? 'bg-success':'bg-warning' }}">
-                                    {{ ucfirst($m->status) }}
-                                </span>
-                            </td>
+ <td>
+    <span class="badge p-2
+        {{ $m->maintenance_type == 0 ? 'bg-danger' :
+           ($m->maintenance_type == 1 ? 'bg-primary' : 'bg-info') }}">
+
+        {{ $m->maintenance_type == 0 ? 'Scrap' :
+           ($m->maintenance_type == 1 ? 'Service' : 'Upgrade') }}
+    </span>
+</td>
+<td>
+    <span class="badge p-2 {{ $m->status == 1 ? 'bg-success':'bg-warning' }}">
+        {{ $m->status == 1 ? 'Complete' : 'Pending' }}
+    </span>
+</td>
                             <td>{{ $m->cost ? '₹ '.number_format($m->cost, 0, '.', ',') : '-' }}</td>
                             <td>{{ $m->start_date ? \Carbon\Carbon::parse($m->start_date)->format('d-m-Y') : '-' }}</td>
                             <td>
@@ -95,7 +103,11 @@
                                 <button class="btn btn-sm btn-info view-btn"
                                     data-id="{{ $m->id }}"
                                     data-item="{{ $m->item->item_name ?? '-' }}"
-                                    data-image="{{ asset('inventory_images/'.$m->item->item_image) }}"
+                                  data-image="{{
+    (!empty($m->item->item_image) && file_exists(public_path('inventory_images/'.$m->item->item_image)))
+    ? asset('inventory_images/'.$m->item->item_image)
+    : asset('images/placeholder.jpg')
+}}"
                                     data-type="{{ $m->maintenance_type }}"
                                     data-desc="{{ $m->issue_description }}"
                                     data-status="{{ $m->status }}"
@@ -110,20 +122,14 @@
                                 </button>
 
                                 <!-- Edit Button - Only show for pending maintenance -->
-                                @if($m->status == 'pending')
+                                @if($m->status == 0)
                                 <a href="{{ route('inventory.maintenance.edit', $m->id) }}"
                                    class="btn btn-sm btn-warning">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 @endif
 
-                                <!-- Complete Button (only for pending) -->
-                                @if($m->status == 'pending')
-                                <button class="btn btn-sm btn-success complete-btn"
-                                        data-id="{{ $m->id }}">
-                                    <i class="bi bi-check-circle"></i>
-                                </button>
-                                @endif
+
                             </td>
                         </tr>
                         @endforeach
@@ -154,7 +160,7 @@
                     <h4 class="fw-bold mb-0">Maintenance Invoice</h4>
                     <small class="text-muted">Inventory Maintenance</small>
                 </div>
-                <span class="badge px-3 py-2" id="b_status"></span>
+
             </div>
 
             <div class="row">
@@ -199,9 +205,9 @@
             </div>
 
             <!-- FOOTER -->
-            <div class="text-end mt-4">
-                <button onclick="window.print()" class="btn btn-success">🖨 Print</button>
-            </div>
+          <div class="text-end mt-4">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+</div>
         </div>
     </div>
 </div>
@@ -219,43 +225,10 @@
         $('#b_remarks').text($(this).data('remarks') || '-');
         $('#b_image').attr('src', $(this).data('image'));
 
-        let status = $(this).data('status');
-        $('#b_status').text(status);
 
-        if(status === 'completed'){
-            $('#b_status').removeClass().addClass('badge bg-success px-3 py-2');
-        } else {
-            $('#b_status').removeClass().addClass('badge bg-warning px-3 py-2');
-        }
     });
 
-    // COMPLETE BUTTON
-    $(document).on('click', '.complete-btn', function(){
-        let id = $(this).data('id');
 
-        Swal.fire({
-            title: 'Complete Maintenance?',
-            icon: 'question',
-            showCancelButton: true
-        }).then((result) => {
-            if(result.isConfirmed){
-                let url = "{{ route('inventory.maintenance.complete', ['id'=>'ID']) }}";
-                url = url.replace('ID', id);
-
-                $.post(url, {
-                    _token: '{{ csrf_token() }}'
-                }, function(res){
-                    if(res.status){
-                        Swal.fire('Done', 'Maintenance completed successfully', 'success').then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire('Error', res.message, 'error');
-                    }
-                });
-            }
-        });
-    });
 </script>
 
 </x-layout>

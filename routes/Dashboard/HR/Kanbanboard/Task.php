@@ -15,8 +15,8 @@ Route::group(['prefix' => 'task'], function () {
     Route::get('/details/{id}', [TaskController::class, 'getTaskDetails'])->name('task.details');
 
 
-    Route::post('/pmts-images', [TaskController::class, 'getPmtsImageDetails'])->name('modulo.pmts-images');
-    Route::post('/update-status/{id}', [TaskController::class, 'updateStatus'])->name('modulo.update-status');
+Route::post('/pmts-images', [TaskController::class, 'getPmtsImageDetails'])->name('task.pmts-images');
+    Route::post('/update-status/{id}', [TaskController::class, 'updateStatus'])->name('task.update-status');
 
     Route::post('/complete/{id}', [TaskController::class, 'completeTask'])->name('task.complete');
     Route::post('/reopen/{id}', [TaskController::class, 'reopenTask'])->name('task.reopen');

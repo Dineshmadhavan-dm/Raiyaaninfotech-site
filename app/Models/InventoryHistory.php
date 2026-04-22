@@ -9,11 +9,12 @@ class InventoryHistory extends Model
         'item_id',
         'employee_id',
         'action_type',
-        'old_status',
-        'new_status',
-        'notes',
         'action_date',
     ];
+
+    protected $casts = [
+    'action_type' => 'integer',
+];
 
     public function item()
     {

@@ -162,9 +162,9 @@ textarea.form-control{
 
 <div class="row g-4">
 
-<div class="col-12">
+<div class="col-12 mt-4">
     <div class="bg-light rounded-3 p-3 mb-2">
-        <h6 class="fw-bold text-primary mb-0">Basic Information</h6>
+        <h6 class="fw-bold text-primary mb-0">Item Details</h6>
     </div>
 </div>
 
@@ -201,16 +201,12 @@ textarea.form-control{
     <label class="form-label">Item Type</label>
     <select name="item_type" class="form-select select2-item_type">
         <option value="">Select Item Type</option>
-        <option value="new" {{ $item->item_type=='new' ? 'selected' : '' }}>New</option>
-        <option value="refurbished" {{ $item->item_type=='refurbished' ? 'selected' : '' }}>Refurbished</option>
+       <option value="0" {{ $item->item_type == 0 ? 'selected' : '' }}>New</option>
+<option value="1" {{ $item->item_type == 1 ? 'selected' : '' }}>Refurbished</option>
     </select>
 </div>
 
-<div class="col-12 mt-4">
-    <div class="bg-light rounded-3 p-3 mb-2">
-        <h6 class="fw-bold text-primary mb-0">Item Details</h6>
-    </div>
-</div>
+
 
 <div class="col-md-4">
     <label class="form-label">Brand</label>

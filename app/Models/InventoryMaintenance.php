@@ -19,8 +19,12 @@ class InventoryMaintenance extends Model
         'end_date',
         'status',
         'remarks',
+        'document'
     ];
-
+protected $casts = [
+    'status' => 'integer',
+    'maintenance_type' => 'integer',
+];
     // ✅ Relationship to InventoryItem
     public function item()
     {

@@ -12,13 +12,22 @@ return new class extends Migration {
             $table->foreignId('item_id')->constrained('inventory_items')->cascadeOnDelete();
             $table->unsignedBigInteger('employee_id')->nullable(); // ✅ ADD THIS
             $table->text('issue_description');
-            $table->enum('maintenance_type', ['scrap', 'service', 'upgrade'])->nullable();
-            $table->decimal('cost', 10, 2)->nullable();
-            $table->string('vendor_name')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->enum('status', ['pending','completed'])->default('pending');
+       $table->tinyInteger('maintenance_type')
+      ->nullable()
+      ->comment('0=scrap,1=service,2=upgrade');
+
+$table->decimal('cost', 10, 2)->nullable();
+
+$table->string('vendor_name')->nullable();
+
+$table->date('start_date')->nullable();
+$table->date('end_date')->nullable();
+
+$table->tinyInteger('status')
+      ->default(0)
+      ->comment('0=pending,1=complete');
             $table->text('remarks')->nullable();
+             $table->string('document')->nullable();
             $table->timestamps();
 
             // ✅ ADD FOREIGN KEY

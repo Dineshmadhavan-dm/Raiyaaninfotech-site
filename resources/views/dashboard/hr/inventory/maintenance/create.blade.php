@@ -123,12 +123,12 @@
 <!-- TYPE -->
 <div class="col-md-6">
     <label>Type <span class="text-danger">*</span></label>
-    <select name="maintenance_type" class="form-select select2">
-        <option value="">Select Type</option>
-        <option value="scrap">Scrap</option>
-        <option value="service">Service</option>
-        <option value="upgrade">Upgrade</option>
-    </select>
+   <select name="maintenance_type" class="form-select select2">
+    <option value="">Select Type</option>
+    <option value="0">Scrap</option>
+    <option value="1">Service</option>
+    <option value="2">Upgrade</option>
+</select>
 </div>
 
 <!-- ISSUE -->
@@ -159,6 +159,31 @@
 <div class="col-12">
     <label>Remarks</label>
     <textarea name="remarks" class="form-control" placeholder="Optional remarks" rows="2"></textarea>
+</div>
+
+<!-- DOCUMENT -->
+<div class="col-md-6">
+    <label>Attachment (PDF/DOC)</label>
+
+    <div class="upload-box border rounded-3 p-3 text-center position-relative">
+
+        <span id="removeDoc" class="position-absolute top-0 end-0 m-2 text-danger fw-bold d-none" style="cursor:pointer;">×</span>
+
+        <div id="doc_placeholder">
+            <i class="bi bi-file-earmark-text fs-2 text-secondary"></i>
+            <p class="mb-0 small text-muted">No file selected</p>
+        </div>
+
+        <div id="docName" class="small text-success mt-2"></div>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-primary mt-2"
+            onclick="$('#docInput').click()">
+        Choose File
+    </button>
+
+    <input type="file" id="docInput" name="document_file"
+           accept=".pdf,.doc,.docx" hidden>
 </div>
 
 <!-- Hidden field for employee_id -->
@@ -277,6 +302,18 @@ function validate(input){
             return false;
         }
     }
+    if(name == 'document_file'){
+    let file = $('#docInput')[0].files[0];
+    if(file){
+        let allowed = ['application/pdf','application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        if(!allowed.includes(file.type)){
+            showError(input,'Invalid file type');
+            return false;
+        }
+    }
+}
 
     if(name == 'cost' && !val){
         showError(input,'Cost required');
@@ -305,7 +342,6 @@ function validate(input){
 $('input, textarea, select').on('keyup change', function(){
     validate($(this));
 });
-
 $('#maintenanceForm').submit(function(e){
     e.preventDefault();
 
@@ -316,10 +352,14 @@ $('#maintenanceForm').submit(function(e){
 
     if(!valid) return;
 
+    let formData = new FormData(this);
+
     $.ajax({
         url: '{{ route("inventory.maintenance.store") }}',
         type: 'POST',
-        data: $(this).serialize(),
+        data: formData,
+        contentType: false,
+        processData: false,
         success: function(res){
             if(res.status){
                 Swal.fire('Success','Maintenance added successfully','success').then(()=>{
@@ -337,6 +377,42 @@ $('#maintenanceForm').submit(function(e){
             }
         }
     });
+});
+
+
+$('#docInput').change(function(){
+
+    let file = this.files[0];
+    if(!file) return;
+
+    let allowed = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    if(!allowed.includes(file.type)){
+        Swal.fire('Error','Only PDF, DOC, DOCX allowed','error');
+        $(this).val('');
+        return;
+    }
+
+      if(file.size > 2 * 1024 * 1024){
+        Swal.fire('Error','File must be less than 2MB','error');
+        $(this).val('');
+        return;
+    }
+
+    $('#docName').html(`<i class="bi bi-file-earmark text-success"></i> ${file.name}`);
+    $('#doc_placeholder').hide();
+    $('#removeDoc').removeClass('d-none');
+});
+
+$('#removeDoc').click(function(){
+    $('#docInput').val('');
+    $('#docName').html('');
+    $('#doc_placeholder').show();
+    $(this).addClass('d-none');
 });
 </script>
 </x-layout>

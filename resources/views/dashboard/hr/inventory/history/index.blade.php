@@ -26,22 +26,16 @@
     </div>
 
     <div class="col-md-3">
-        <select name="action" class="form-control">
-            <option value="">All Action</option>
-            <option value="assigned" {{ request('action')=='assigned'?'selected':'' }}>Assigned</option>
-            <option value="returned" {{ request('action')=='returned'?'selected':'' }}>Returned</option>
-            <option value="maintenance" {{ request('action')=='maintenance'?'selected':'' }}>Maintenance</option>
-        </select>
+       <select name="action" class="form-control">
+    <option value="">All Action</option>
+    <option value="0" {{ request('action')==='0'?'selected':'' }}>Assigned</option>
+    <option value="1" {{ request('action')==='1'?'selected':'' }}>Returned</option>
+    <option value="2" {{ request('action')==='2'?'selected':'' }}>Scrap</option>
+    <option value="3" {{ request('action')==='3'?'selected':'' }}>Service</option>
+    <option value="4" {{ request('action')==='4'?'selected':'' }}>Upgrade</option>
+</select>
     </div>
 
-    <div class="col-md-2">
-        <select name="status" class="form-control">
-            <option value="">All Status</option>
-            <option value="available" {{ request('status')=='available'?'selected':'' }}>Available</option>
-            <option value="assigned" {{ request('status')=='assigned'?'selected':'' }}>Assigned</option>
-            <option value="maintenance" {{ request('status')=='maintenance'?'selected':'' }}>Maintenance</option>
-        </select>
-    </div>
 
     <div class="col-md-4">
         <button class="btn btn-primary">Filter</button>
@@ -76,7 +70,6 @@
 <th>#</th>
 <th>Item</th>
 <th>Action</th>
-<th>Status</th>
 <th>Date</th>
 <th class="">View</th>
 </tr>
@@ -87,14 +80,21 @@
 <tr>
 <td>{{ $histories->firstItem() + $index }}</td>
 <td>{{ $history->item->item_name ?? '-' }}</td>
-<td class="text-capitalize">{{ $history->action_type }}</td>
+@php
+$map = [
+    0 => ['Assigned','bg-warning text-dark'],
+    1 => ['Returned','bg-success'],
+    2 => ['Scrap','bg-danger'],
+    3 => ['Service','bg-primary'],
+    4 => ['Upgrade','bg-info'],
+];
+$action = $map[$history->action_type] ?? ['Unknown','bg-secondary'];
+@endphp
+
 <td>
-<span class="badge p-2
-    {{ $history->new_status == 'available' ? 'bg-success' :
-       ($history->new_status == 'assigned' ? 'bg-warning text-dark' :
-       ($history->new_status == 'maintenance' ? 'bg-info' : 'bg-secondary')) }}">
-    {{ $history->new_status }}
-</span>
+    <span class="badge px-3 py-2 {{ $action[1] }}">
+        {{ $action[0] }}
+    </span>
 </td>
 <td>{{ $history->action_date ? \Carbon\Carbon::parse($history->action_date)->format('d-m-Y') : '-' }}</td>
 <td class="">
@@ -103,9 +103,6 @@ data-bs-toggle="modal"
 data-bs-target="#viewModal"
 data-item="{{ $history->item->item_name }}"
 data-action="{{ $history->action_type }}"
-data-old="{{ $history->old_status }}"
-data-new="{{ $history->new_status }}"
-data-notes="{{ $history->notes }}"
 data-date="{{ \Carbon\Carbon::parse($history->action_date)->format('d-m-Y') }}">
 <i class="bi bi-eye"></i>
 </button>
@@ -144,33 +141,25 @@ of {{ $histories->total() }} entries
 <h4 class="fw-bold mb-0">History Invoice</h4>
 <small class="text-muted">Inventory Activity</small>
 </div>
-<span class="fw-bold" id="b_action"></span>
+
 </div>
 
 <div class="row">
 
 <div class="col-md-6">
 <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+
+<div class="d-flex justify-content-between ">
+
 <h6 class="fw-bold text-primary">Item Info</h6>
+
+<span class="fw-bold" id="b_action"></span></div>
+
 <p><b>Item:</b> <span id="b_item"></span></p>
 <p><b>Action:</b> <span id="b_action_text"></span></p>
 </div>
 </div>
 
-<div class="col-md-6">
-<div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
-<h6 class="fw-bold text-primary">Status Change</h6>
-<p><b>Old:</b> <span id="b_old"></span></p>
-<p><b>New:</b> <span id="b_new"></span></p>
-</div>
-</div>
-
-<div class="col-12">
-<div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
-<h6 class="fw-bold text-primary">Notes</h6>
-<p id="b_notes"></p>
-</div>
-</div>
 
 <div class="col-12">
 <div class="card border-0 shadow-sm rounded-4 p-3 text-center bg-light">
@@ -182,7 +171,6 @@ of {{ $histories->total() }} entries
 </div>
 
 <div class="text-end mt-3">
-<button onclick="window.print()" class="btn btn-success">🖨 Print</button>
 </div>
 
 </div>
@@ -193,33 +181,25 @@ of {{ $histories->total() }} entries
 $(document).on('click','.view-history',function(){
 
     let action = $(this).data('action');
-    let newStatus = $(this).data('new');
+
+    let map = {
+        0: {text:'Assigned', class:'bg-warning text-dark'},
+        1: {text:'Returned', class:'bg-success'},
+        2: {text:'Scrap', class:'bg-danger'},
+        3: {text:'Service', class:'bg-primary'},
+        4: {text:'Upgrade', class:'bg-info'}
+    };
+
+    let data = map[action] ?? {text:'Unknown', class:'bg-secondary'};
 
     $('#b_item').text($(this).data('item'));
-    $('#b_action_text').text(action.charAt(0).toUpperCase() + action.slice(1));
-    $('#b_old').text($(this).data('old'));
-    $('#b_new').text(newStatus);
-    $('#b_notes').text($(this).data('notes') || '-');
+    $('#b_action_text').text(data.text);
     $('#b_date').text($(this).data('date'));
 
     let el = $('#b_action');
-
-    el.text(newStatus);
-    el.removeClass();
-
-    if(newStatus === 'available'){
-        el.addClass('fw-bold text-success');
-    }
-    else if(newStatus === 'assigned'){
-        el.addClass('fw-bold text-warning');
-    }
-    else if(newStatus === 'maintenance'){
-        el.addClass('fw-bold text-info');
-    }
-    else{
-        el.addClass('fw-bold text-secondary');
-    }
-
+    el.removeClass()
+      .addClass('badge px-3 py-2 ' + data.class)
+      .text(data.text);
 });
 </script>
 

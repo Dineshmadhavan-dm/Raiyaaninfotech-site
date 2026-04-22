@@ -112,9 +112,9 @@
     <label>Type <span class="text-danger">*</span></label>
     <select name="maintenance_type" class="form-select select2">
         <option value="">Select Type</option>
-        <option value="scrap" {{ $maintenance->maintenance_type == 'scrap' ? 'selected' : '' }}>Scrap</option>
-        <option value="service" {{ $maintenance->maintenance_type == 'service' ? 'selected' : '' }}>Service</option>
-        <option value="upgrade" {{ $maintenance->maintenance_type == 'upgrade' ? 'selected' : '' }}>Upgrade</option>
+       <option value="0" {{ $maintenance->maintenance_type == 0 ? 'selected' : '' }}>Scrap</option>
+<option value="1" {{ $maintenance->maintenance_type == 1 ? 'selected' : '' }}>Service</option>
+<option value="2" {{ $maintenance->maintenance_type == 2 ? 'selected' : '' }}>Upgrade</option>
     </select>
 </div>
 
@@ -122,8 +122,8 @@
 <div class="col-md-6">
     <label>Status <span class="text-danger">*</span></label>
     <select name="status" class="form-select select2">
-        <option value="pending" {{ $maintenance->status == 'pending' ? 'selected' : '' }}>Pending</option>
-        <option value="completed" {{ $maintenance->status == 'completed' ? 'selected' : '' }}>Completed</option>
+      <option value="0" {{ $maintenance->status == 0 ? 'selected' : '' }}>Pending</option>
+<option value="1" {{ $maintenance->status == 1 ? 'selected' : '' }}>Complete</option>
     </select>
 </div>
 
@@ -163,6 +163,42 @@
     <textarea name="remarks" class="form-control" placeholder="Optional remarks" rows="2">{{ $maintenance->remarks }}</textarea>
 </div>
 
+
+
+<!-- DOCUMENT -->
+<div class="col-md-6">
+    <label>Attachment (PDF/DOC)</label>
+
+    <!-- Existing File -->
+    @if($maintenance->document)
+    <div class="mb-2">
+        <a href="{{ asset('maintenance_docs/'.$maintenance->document) }}"
+           target="_blank" class="btn btn-sm btn-success">
+           <i class="bi bi-file-earmark-text"></i> View Current File
+        </a>
+    </div>
+    @endif
+
+    <div class="upload-box border rounded-3 p-3 text-center position-relative">
+
+        <span id="removeDoc" class="position-absolute top-0 end-0 m-2 text-danger fw-bold d-none" style="cursor:pointer;">×</span>
+
+        <div id="doc_placeholder">
+            <i class="bi bi-file-earmark-text fs-2 text-secondary"></i>
+            <p class="mb-0 small text-muted">No file selected</p>
+        </div>
+
+        <div id="docName" class="small text-success mt-2"></div>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-primary mt-2"
+            onclick="$('#docInput').click()">
+        Choose File
+    </button>
+
+    <input type="file" id="docInput" name="document_file"
+           accept=".pdf,.doc,.docx" hidden>
+</div>
 </div>
 
 </div>
@@ -196,7 +232,7 @@ $(document).ready(function(){
 
     // Show/hide end date based on status
     $('select[name="status"]').on('change', function(){
-        if($(this).val() == 'completed'){
+        if($(this).val() == 1){
             $('#endDateContainer').slideDown();
         } else {
             $('#endDateContainer').slideUp();
@@ -276,7 +312,6 @@ function validate(input){
 $('input, textarea, select').on('keyup change', function(){
     validate($(this));
 });
-
 $('#maintenanceForm').submit(function(e){
     e.preventDefault();
 
@@ -289,10 +324,15 @@ $('#maintenanceForm').submit(function(e){
 
     if(!valid) return;
 
+    // ✅ IMPORTANT: Use FormData
+    let formData = new FormData(this);
+
     $.ajax({
         url: '{{ route("inventory.maintenance.update", $maintenance->id) }}',
         type: 'POST',
-        data: $(this).serialize(),
+        data: formData,
+        contentType: false,   // ✅ required
+        processData: false,   // ✅ required
         success: function(res){
             if(res.status){
                 Swal.fire('Success','Maintenance updated successfully','success').then(()=>{
@@ -310,6 +350,42 @@ $('#maintenanceForm').submit(function(e){
             }
         }
     });
+});
+
+
+$('#docInput').change(function(){
+
+    let file = this.files[0];
+    if(!file) return;
+
+    let allowed = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    if(!allowed.includes(file.type)){
+        Swal.fire('Error','Only PDF, DOC, DOCX allowed','error');
+        $(this).val('');
+        return;
+    }
+
+    if(file.size > 2 * 1024 * 1024){
+        Swal.fire('Error','File must be less than 2MB','error');
+        $(this).val('');
+        return;
+    }
+
+    $('#docName').html(`<i class="bi bi-file-earmark text-success"></i> ${file.name}`);
+    $('#doc_placeholder').hide();
+    $('#removeDoc').removeClass('d-none');
+});
+
+$('#removeDoc').click(function(){
+    $('#docInput').val('');
+    $('#docName').html('');
+    $('#doc_placeholder').show();
+    $(this).addClass('d-none');
 });
 </script>
 

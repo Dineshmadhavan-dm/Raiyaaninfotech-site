@@ -15,7 +15,6 @@ Route::prefix('inventory-maintenance')->group(function () {
 
     // View & Actions
     Route::get('/{id}', [InventoryMaintenanceController::class, 'show'])->name('inventory.maintenance.show');
-    Route::post('/{id}/complete', [InventoryMaintenanceController::class, 'complete'])->name('inventory.maintenance.complete');
 
     // AJAX routes for checking assignment
     Route::get('/check-assignment/{itemId}', [InventoryMaintenanceController::class, 'checkItemAssignment'])
