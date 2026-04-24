@@ -316,22 +316,37 @@ $('#assignForm').submit(function(e){
         if(!validate($(this))) valid=false;
     });
 
-    // 🔥 BLOCK IF ITEM INVALID
     let itemInvalid = $('select[name="item_id"]').hasClass('is-invalid');
 
     if(!valid || itemInvalid) return;
 
     $.post('{{ route("inventory.assignments.store") }}',
-        $(this).serialize(),
-        function(res){
+        $(this).serialize()
+    )
+    .done(function(res){
 
-            if(res.status){
-                Swal.fire('Success','Item Assigned','success').then(()=>{
-                    window.location.href='{{ route("inventory.assignments.index") }}';
-                });
-            }
+        if(res.status){
+            Swal.fire('Success', res.message, 'success').then(()=>{
+                window.location.href='{{ route("inventory.assignments.index") }}';
+            });
+        } else {
+            Swal.fire('Error', res.message, 'error');
         }
-    );
+
+    })
+    .fail(function(xhr){
+
+        // 🔥 Validation error (422)
+        if(xhr.status === 422){
+            let errors = xhr.responseJSON.errors;
+            let msg = Object.values(errors).map(e => e[0]).join('\n');
+            Swal.fire('Validation Error', msg, 'warning');
+        } else {
+            console.log(xhr.responseText);
+            Swal.fire('Error','Server error occurred','error');
+        }
+
+    });
 });
 </script>
 </x-layout>

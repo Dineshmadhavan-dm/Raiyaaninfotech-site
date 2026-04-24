@@ -556,14 +556,14 @@
 
 
 
-
-                         @if (
+@if (
     auth()->user()->can('inventory') ||
     auth()->user()->can('inventory->items view') ||
     auth()->user()->can('inventory->categories view') ||
     auth()->user()->can('inventory->assignments view') ||
     auth()->user()->can('inventory->maintenance view') ||
-    auth()->user()->can('inventory->history view')
+    auth()->user()->can('inventory->history view') ||
+    auth()->user()->can('inventory->reports view')
 )
 
 <li class="nav-item mt-1">
@@ -617,6 +617,15 @@
         <li>
             <a href="{{ route('inventory.history.index') }}" class="nav-link">
                 <i class="bi bi-clock-history me-2"></i> History
+            </a>
+        </li>
+        @endcan
+
+        {{-- NEW: REPORTS MENU ITEM --}}
+        @can('inventory->reports view')
+        <li>
+            <a href="{{ route('reports.index') }}" class="nav-link">
+                <i class="bi bi-file-text me-2"></i> Reports
             </a>
         </li>
         @endcan

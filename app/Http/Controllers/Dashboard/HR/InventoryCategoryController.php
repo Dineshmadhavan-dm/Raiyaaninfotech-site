@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryCategory;
+use App\Models\InventoryHistory;
 use Illuminate\Http\Request;
 
 class InventoryCategoryController extends Controller
@@ -18,23 +19,22 @@ class InventoryCategoryController extends Controller
         });
     }
 
-public function checkCategory(Request $request)
-{
-    $query = InventoryCategory::whereRaw(
-        'LOWER(category_name) = ?',
-        [strtolower($request->category_name)]
-    )->where('delete_status', 1);
+    public function checkCategory(Request $request)
+    {
+        $query = InventoryCategory::whereRaw(
+            'LOWER(category_name) = ?',
+            [strtolower($request->category_name)]
+        )->where('delete_status', 1);
 
-    if ($request->id) {
-        $query->where('id', '!=', $request->id);
+        if ($request->id) {
+            $query->where('id', '!=', $request->id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json(['exists' => $exists]);
     }
 
-    $exists = $query->exists();
-
-    return response()->json(['exists' => $exists]);
-}
-
-    // ✅ INDEX
     public function index(Request $request)
     {
         $query = InventoryCategory::where('delete_status', 1);
@@ -50,13 +50,11 @@ public function checkCategory(Request $request)
         return view('dashboard.hr.inventory.category.index', compact('categories'));
     }
 
-    // ✅ CREATE
     public function create()
     {
         return view('dashboard.hr.inventory.category.create');
     }
 
-    // ✅ STORE (🔥 fixed)
     public function store(Request $request)
     {
         $request->validate([
@@ -77,10 +75,17 @@ public function checkCategory(Request $request)
             ],
         ]);
 
-        InventoryCategory::create([
+        $category = InventoryCategory::create([
             'category_name' => $request->category_name,
             'description' => $request->description,
             'delete_status' => 1
+        ]);
+
+        InventoryHistory::log([
+            'module' => InventoryHistory::MODULE_CATEGORY,
+            'action' => InventoryHistory::ACTION_CREATED,
+            'category_id' => $category->id,
+            'new_data' => $category->toArray(),
         ]);
 
         return response()->json([
@@ -89,14 +94,12 @@ public function checkCategory(Request $request)
         ]);
     }
 
-    // ✅ EDIT
     public function edit($id)
     {
         $category = InventoryCategory::findOrFail($id);
         return view('dashboard.hr.inventory.category.edit', compact('category'));
     }
 
-    // ✅ UPDATE (🔥 IMPORTANT FIX)
     public function update(Request $request, $id)
     {
         $category = InventoryCategory::findOrFail($id);
@@ -105,13 +108,12 @@ public function checkCategory(Request $request)
             'category_name' => [
                 'required',
                 function ($attr, $value, $fail) use ($id) {
-
                     $exists = InventoryCategory::whereRaw(
                         'LOWER(category_name) = ?',
                         [strtolower($value)]
                     )
                     ->where('delete_status', 1)
-                    ->where('id', '!=', $id) // 🔥 ignore current record
+                    ->where('id', '!=', $id)
                     ->exists();
 
                     if ($exists) {
@@ -121,9 +123,19 @@ public function checkCategory(Request $request)
             ],
         ]);
 
+        $oldData = $category->getOriginal();
+
         $category->update([
             'category_name' => $request->category_name,
             'description' => $request->description,
+        ]);
+
+        InventoryHistory::log([
+            'module' => InventoryHistory::MODULE_CATEGORY,
+            'action' => InventoryHistory::ACTION_UPDATED,
+            'category_id' => $category->id,
+            'old_data' => $oldData,
+            'new_data' => $category->fresh()->toArray(),
         ]);
 
         return response()->json([
@@ -132,12 +144,21 @@ public function checkCategory(Request $request)
         ]);
     }
 
-    // ✅ DELETE
     public function destroy($id)
     {
         $category = InventoryCategory::findOrFail($id);
 
+        $oldData = $category->toArray();
+
         $category->update(['delete_status' => 0]);
+
+        InventoryHistory::log([
+            'module' => InventoryHistory::MODULE_CATEGORY,
+            'action' => InventoryHistory::ACTION_DELETED,
+            'category_id' => $category->id,
+            'old_data' => $oldData,
+            'new_data' => ['delete_status' => 0],
+        ]);
 
         return response()->json([
             'status' => true,

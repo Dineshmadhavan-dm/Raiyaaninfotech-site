@@ -91,6 +91,7 @@ Route::group(['middleware' => ['auth']], routes: function () {
             require __DIR__ . '/Dashboard/HR/InventoryAssignment.php';
             require __DIR__ . '/Dashboard/HR/InventoryMaintenance.php';
             require __DIR__ . '/Dashboard/HR/InventoryHistory.php';
+            require __DIR__ . '/Dashboard/HR/InventoryReport.php';
 
         });
     });

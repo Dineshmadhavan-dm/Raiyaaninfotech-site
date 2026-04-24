@@ -14,9 +14,6 @@ Route::prefix('inventory-assignments')->group(function () {
 
 
 
-    Route::get('/export-pdf', [InventoryAssignmentController::class, 'exportPdf'])
-    ->name('inventory.assignments.export-pdf');
-
     Route::get('/{id}', [InventoryAssignmentController::class, 'show'])->name('inventory.assignments.show');
 
     // 🔥 SPECIAL ROUTE (RETURN)

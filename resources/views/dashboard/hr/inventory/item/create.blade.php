@@ -182,7 +182,6 @@ textarea.form-control{
 <label class="form-label">Item Code <span class="text-danger">*</span></label>
 <input type="text" name="item_code" readonly class="form-control bg-light" placeholder="Auto generated">
 
-<input type="hidden" id="last_id" value="{{ $lastId }}">
 </div>
 
 
@@ -799,12 +798,11 @@ $('#itemForm').submit(function(e){
 });
 
 
-
 $(document).ready(function(){
 
-    let lastId = parseInt($('#last_id').val()) || 0;
+    let lastNumber = parseInt(@json($lastNumber)) || 0;
 
-    let next = lastId + 1;
+    let next = lastNumber + 1;
 
     let year = new Date().getFullYear();
 

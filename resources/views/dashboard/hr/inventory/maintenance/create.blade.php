@@ -95,6 +95,17 @@
         @endforeach
     </select>
 </div>
+<div class="col-12 mt-2" id="notAssignedBox" style="display:none;">
+    <div class="card border-0 shadow-sm text-center p-4" style="background:#f9fafb;">
+        <div class="mb-3">
+            <i class="bi bi-exclamation-circle text-warning" style="font-size:40px;"></i>
+        </div>
+        <h5 class="fw-bold text-dark">Item Not Assigned</h5>
+        <p class="text-muted mb-0">
+            This item is not currently assigned to any employee
+        </p>
+    </div>
+</div>
 
 <!-- ASSIGNED EMPLOYEE DETAILS (Dynamic) -->
 <div class="col-12" id="employeeDetailsContainer" style="display:none;">
@@ -219,43 +230,53 @@ $(document).ready(function(){
         width: '100%'
     });
 
-    // Get employee details when item is selected
-    $('#item_id').on('change', function(){
-        let itemId = $(this).val();
+ let hideTimer; // global
 
-        if(!itemId) {
+$('#item_id').on('change', function(){
+
+    let itemId = $(this).val();
+
+    if(!itemId){
+        $('#employeeDetailsContainer').hide();
+        $('#notAssignedBox').hide();
+        $('#employee_id').val('');
+        return;
+    }
+
+    $.get('/dashboard/employees/inventory-maintenance/check-assignment/' + itemId, function(res){
+
+        if(res.assigned && res.assignment){
+
+            clearTimeout(hideTimer); // stop timer
+
+            $('#emp_name').text(res.assignment.employee?.fullname || 'N/A');
+            $('#emp_dept').text(res.assignment.department?.dep_name || 'N/A');
+            $('#assigned_date').text(res.assignment.assigned_date || 'N/A');
+
+            $('#employee_id').val(res.assignment.employee_id);
+
+            $('#employeeDetailsContainer').fadeIn();
+            $('#notAssignedBox').hide();
+
+        } else {
+
             $('#employeeDetailsContainer').hide();
             $('#employee_id').val('');
-            return;
+
+            let box = $('#notAssignedBox');
+
+            box.stop(true,true).fadeIn();
+
+            clearTimeout(hideTimer);
+
+            hideTimer = setTimeout(function(){
+                box.fadeOut();
+            }, 3000);
         }
 
-        // ✅ FIXED: Use direct URL path instead of route helper
-        let url = '/dashboard/employees/inventory-maintenance/check-assignment/' + itemId;
-
-        $.get(url, function(res){
-            if(res.assigned && res.assignment) {
-                // Item is assigned, show employee details
-                $('#emp_name').text(res.assignment.employee?.fullname || 'N/A');
-                $('#emp_dept').text(res.assignment.department?.dep_name || 'N/A');
-                $('#assigned_date').text(res.assignment.assigned_date || 'N/A');
-                $('#employee_id').val(res.assignment.employee_id);
-                $('#employeeDetailsContainer').fadeIn();
-            } else {
-                // Item not assigned
-                $('#employeeDetailsContainer').hide();
-                $('#employee_id').val('');
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Item Not Assigned',
-                    text: 'This item is not currently assigned to any employee',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-        }).fail(function(){
-            $('#employeeDetailsContainer').hide();
-        });
     });
+
+});
 });
 
 // Validation Functions

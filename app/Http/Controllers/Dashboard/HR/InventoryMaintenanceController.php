@@ -7,7 +7,6 @@ use App\Models\InventoryAssignment;
 use App\Models\InventoryMaintenance;
 use App\Models\InventoryItem;
 use App\Models\InventoryHistory;
-
 use Illuminate\Http\Request;
 
 class InventoryMaintenanceController extends Controller
@@ -27,7 +26,7 @@ class InventoryMaintenanceController extends Controller
         $query = InventoryMaintenance::with('item');
 
         if ($request->filled('item')) {
-            $query->whereHas('item', function($q) use ($request){
+            $query->whereHas('item', function ($q) use ($request) {
                 $q->where('item_name', 'like', '%' . $request->item . '%');
             });
         }
@@ -42,9 +41,7 @@ class InventoryMaintenanceController extends Controller
 
         $perPage = $request->get('per_page', 5);
 
-        $maintenances = $query->latest()
-            ->paginate($perPage)
-            ->withQueryString();
+        $maintenances = $query->latest()->paginate($perPage)->withQueryString();
 
         return view('dashboard.hr.inventory.maintenance.index', compact('maintenances'));
     }
@@ -52,7 +49,7 @@ class InventoryMaintenanceController extends Controller
     public function create()
     {
         $items = InventoryItem::where('delete_status', 1)
-            ->whereDoesntHave('maintenances', function($q){
+            ->whereDoesntHave('maintenances', function ($q) {
                 $q->where('status', 'pending');
             })
             ->get();
@@ -72,56 +69,65 @@ class InventoryMaintenanceController extends Controller
             'remarks' => 'nullable|max:500',
         ]);
 
-   $data = [
-    'item_id' => $request->item_id,
-    'employee_id' => $request->employee_id,
-    'issue_description' => $request->issue_description,
-    'maintenance_type' => $request->maintenance_type,
-    'cost' => $request->cost,
-    'vendor_name' => $request->vendor_name,
-    'start_date' => $request->start_date,
-    'status' => 0,
-    'remarks' => $request->remarks,
-];
-
-// ✅ DOCUMENT UPLOAD
-if ($request->hasFile('document_file')) {
-    $file = $request->file('document_file');
-    $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
-    $file->move(public_path('maintenance_docs'), $filename);
-    $data['document'] = $filename;
-}
-
-$maintenance = InventoryMaintenance::create($data);
-// 🔥 IF SCRAP → AUTO RETURN + MARK SCRAP
-if ($request->maintenance_type == 0) {
-
-    $assignments = InventoryAssignment::where('item_id', $request->item_id)
-        ->where('status', 0)
-        ->get();
-
-    foreach ($assignments as $assignment) {
-
-        $assignment->update([
-            'status' => 1, // returned
-            'condition_status' => 0, // scrap
-            'return_date' => now()
-        ]);
-
-        // ✅ ADD HISTORY (IMPORTANT 🔥)
-        InventoryHistory::create([
-            'item_id' => $assignment->item_id,
-            'employee_id' => $assignment->employee_id,
-            'action_type' => 1, // returned
-            'action_date' => now(),
-        ]);
-    }
-}
-        InventoryHistory::create([
+        $data = [
             'item_id' => $request->item_id,
             'employee_id' => $request->employee_id,
-            'action_type' => $request->maintenance_type,
-            'action_date' => now(),
+            'issue_description' => $request->issue_description,
+            'maintenance_type' => $request->maintenance_type,
+            'cost' => $request->cost,
+            'vendor_name' => $request->vendor_name,
+            'start_date' => $request->start_date,
+            'status' => 0,
+            'remarks' => $request->remarks,
+        ];
+
+        if ($request->hasFile('document_file')) {
+            $file = $request->file('document_file');
+            $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('maintenance_docs'), $filename);
+            $data['document'] = $filename;
+        }
+
+        $maintenance = InventoryMaintenance::create($data);
+
+        if ($request->maintenance_type == 0) {
+            $assignments = InventoryAssignment::where('item_id', $request->item_id)
+                ->where('status', 0)
+                ->get();
+
+            foreach ($assignments as $assignment) {
+                $oldAssignment = $assignment->toArray();
+
+                $assignment->update([
+                    'status' => 1,
+                    'condition_status' => 0,
+                    'return_date' => now()
+                ]);
+
+                InventoryHistory::log([
+                    'module' => InventoryHistory::MODULE_ASSIGNMENT,
+                    'action' => InventoryHistory::ACTION_RETURNED,
+                    'item_id' => $assignment->item_id,
+                    'employee_id' => $assignment->employee_id,
+                    'assignment_id' => $assignment->id,
+                    'old_data' => $oldAssignment,
+                    'new_data' => $assignment->toArray(),
+                ]);
+            }
+        }
+
+        InventoryHistory::log([
+            'module' => InventoryHistory::MODULE_MAINTENANCE,
+            'action' => InventoryHistory::ACTION_CREATED,
+            'sub_action' => match($maintenance->maintenance_type) {
+                0 => InventoryHistory::SUB_SCRAP,
+                1 => InventoryHistory::SUB_SERVICE,
+                2 => InventoryHistory::SUB_UPGRADE,
+            },
+            'item_id' => $maintenance->item_id,
+            'employee_id' => $maintenance->employee_id,
+            'maintenance_id' => $maintenance->id,
+            'new_data' => $maintenance->toArray(),
         ]);
 
         return response()->json([
@@ -153,58 +159,74 @@ if ($request->maintenance_type == 0) {
             'remarks' => 'nullable|max:500',
         ]);
 
-    $data = $request->except('_token', '_method');
+        $oldData = $maintenance->toArray();
 
-// ✅ DOCUMENT UPLOAD
-if ($request->hasFile('document_file')) {
-    $file = $request->file('document_file');
-    $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
-    $file->move(public_path('maintenance_docs'), $filename);
+        $data = $request->except('_token', '_method');
 
-    if ($maintenance->document && file_exists(public_path('maintenance_docs/'.$maintenance->document))) {
-        unlink(public_path('maintenance_docs/'.$maintenance->document));
-    }
+        if ($request->hasFile('document_file')) {
+            $file = $request->file('document_file');
+            $filename = 'mnt_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('maintenance_docs'), $filename);
 
-    $data['document'] = $filename;
-}
+            if ($maintenance->document && file_exists(public_path('maintenance_docs/' . $maintenance->document))) {
+                unlink(public_path('maintenance_docs/' . $maintenance->document));
+            }
 
-// reset end date
-if ($request->status == 0) {
-    $data['end_date'] = null;
-}
+            $data['document'] = $filename;
+        }
 
-$maintenance->update($data);
+        if ($request->status == 0) {
+            $data['end_date'] = null;
+        }
 
-if ($request->maintenance_type == 0) {
+        $maintenance->update($data);
 
-    $assignments = InventoryAssignment::where('item_id', $maintenance->item_id)
-        ->where('status', 0)
-        ->get();
+        if ($request->maintenance_type == 0) {
+            $assignments = InventoryAssignment::where('item_id', $maintenance->item_id)
+                ->where('status', 0)
+                ->get();
 
-    foreach ($assignments as $assignment) {
+            foreach ($assignments as $assignment) {
+                $oldAssignment = $assignment->toArray();
 
-        $assignment->update([
-            'status' => 1,
-            'condition_status' => 0,
-            'return_date' => now()
+                $assignment->update([
+                    'status' => 1,
+                    'condition_status' => 0,
+                    'return_date' => now()
+                ]);
+
+                InventoryHistory::log([
+                    'module' => InventoryHistory::MODULE_ASSIGNMENT,
+                    'action' => InventoryHistory::ACTION_RETURNED,
+                    'item_id' => $assignment->item_id,
+                    'employee_id' => $assignment->employee_id,
+                    'assignment_id' => $assignment->id,
+                    'old_data' => $oldAssignment,
+                    'new_data' => $assignment->toArray(),
+                ]);
+            }
+        }
+
+        InventoryHistory::log([
+            'module' => InventoryHistory::MODULE_MAINTENANCE,
+            'action' => InventoryHistory::ACTION_UPDATED,
+            'sub_action' => match($maintenance->maintenance_type) {
+                0 => InventoryHistory::SUB_SCRAP,
+                1 => InventoryHistory::SUB_SERVICE,
+                2 => InventoryHistory::SUB_UPGRADE,
+            },
+            'item_id' => $maintenance->item_id,
+            'employee_id' => $maintenance->employee_id,
+            'maintenance_id' => $maintenance->id,
+            'old_data' => $oldData,
+            'new_data' => $maintenance->fresh()->toArray(),
         ]);
-
-        InventoryHistory::create([
-            'item_id' => $assignment->item_id,
-            'employee_id' => $assignment->employee_id,
-            'action_type' => 1,
-            'action_date' => now(),
-        ]);
-    }
-}
 
         return response()->json([
             'status' => true,
             'message' => 'Maintenance updated successfully'
         ]);
     }
-
-
 
     public function show($id)
     {
@@ -223,7 +245,7 @@ if ($request->maintenance_type == 0) {
             ->with(['employee', 'department'])
             ->first();
 
-        if($assignment) {
+        if ($assignment) {
             return response()->json([
                 'assigned' => true,
                 'assignment' => $assignment

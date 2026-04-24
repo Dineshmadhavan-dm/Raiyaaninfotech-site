@@ -25,6 +25,16 @@
         display: inline-block;
     }
 
+     .badge-active {
+        background: #1089b9;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
     .item-icon-wrapper {
         width: 50px;
         height: 50px;
@@ -550,9 +560,14 @@
                                         <span class="item-code">{{ $assignment->item->item_code }}</span>
                                     </div>
                                 </div>
+                                <div>
+                                      <span class="badge-active">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Active
+                                </span>
                                 <span class="badge-assigned">
                                     <i class="bi bi-check-circle-fill me-1"></i> Assigned
                                 </span>
+                                </div>
                             </div>
 
                             <!-- MAINTENANCE TRACKING SECTION -->
