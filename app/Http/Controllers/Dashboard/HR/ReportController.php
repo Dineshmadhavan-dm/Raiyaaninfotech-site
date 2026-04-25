@@ -26,7 +26,6 @@ class ReportController extends Controller
 
     public function index()
     {
-        // Get data for filters
         $categories = InventoryCategory::where('delete_status', 1)->get();
         $departments = Department::where('delete_status', 1)->get();
         $employees = Employee::where('delete_status', 1)
@@ -40,14 +39,10 @@ class ReportController extends Controller
         return view('dashboard.hr.inventory.reports.index', compact('categories', 'departments', 'employees', 'items'));
     }
 
-    /**
-     * Export Items Report
-     */
     public function exportItems(Request $request)
     {
         $query = InventoryItem::where('delete_status', 1)->with('category');
 
-        // Filter by category
         if ($request->filled('category_ids')) {
             $categoryIds = $request->input('category_ids');
             if (is_array($categoryIds) && !empty($categoryIds)) {
@@ -55,63 +50,35 @@ class ReportController extends Controller
             }
         }
 
-        // Filter by item type
         if ($request->filled('item_type')) {
             $query->where('item_type', $request->item_type);
         }
 
-        // Filter by date range
-        if ($request->filled('purchase_date_from')) {
-            $query->whereDate('purchase_date', '>=', $request->purchase_date_from);
-        }
-        if ($request->filled('purchase_date_to')) {
-            $query->whereDate('purchase_date', '<=', $request->purchase_date_to);
+        if ($request->filled('from_date')) {
+            $query->whereDate('purchase_date', '>=', $request->from_date);
         }
 
-        // Filter by cost range
-        if ($request->filled('cost_min')) {
-            $query->where('purchase_cost', '>=', $request->cost_min);
-        }
-        if ($request->filled('cost_max')) {
-            $query->where('purchase_cost', '<=', $request->cost_max);
+        if ($request->filled('to_date')) {
+            $query->whereDate('purchase_date', '<=', $request->to_date);
         }
 
-        // Search by item name/code
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('item_name', 'like', "%{$search}%")
-                  ->orWhere('item_code', 'like', "%{$search}%")
-                  ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        // Sorting
         $sortBy = $request->input('sort_by', 'item_name');
         $sortOrder = $request->input('sort_order', 'asc');
-        $allowedSortFields = ['item_name', 'item_code', 'purchase_date', 'purchase_cost', 'category_id'];
+        $allowedSortFields = ['item_name', 'item_code', 'purchase_date', 'purchase_cost'];
 
         if (in_array($sortBy, $allowedSortFields)) {
-            if ($sortBy === 'category_id') {
-                $query->join('inventory_categories', 'inventory_items.category_id', '=', 'inventory_categories.id')
-                    ->orderBy('inventory_categories.category_name', $sortOrder)
-                    ->select('inventory_items.*');
-            } else {
-                $query->orderBy($sortBy, $sortOrder);
-            }
+            $query->orderBy($sortBy, $sortOrder);
         } else {
             $query->orderBy('item_name', 'asc');
         }
 
         $items = $query->get();
 
-        // Calculate summaries
         $totalItems = $items->count();
         $totalCost = $items->sum('purchase_cost');
         $totalQuantity = $items->sum('quantity');
-
-          $newItemsCount = $items->where('item_type', 0)->count();
-    $refurbishedItemsCount = $items->where('item_type', 1)->count();
+        $newItemsCount = $items->where('item_type', 0)->count();
+        $refurbishedItemsCount = $items->where('item_type', 1)->count();
 
         $categoriesSummary = [];
         foreach ($items as $item) {
@@ -137,13 +104,32 @@ class ReportController extends Controller
 
         $companyLogo = $this->getCompanyLogo();
         $companyName = $this->getCompanyName();
-        $filterDescription = $this->buildFilterDescription($request);
+
+        $filterParts = [];
+        if ($request->filled('category_ids')) {
+            $cats = InventoryCategory::whereIn('id', $request->category_ids)->pluck('category_name')->toArray();
+            $filterParts[] = 'Categories: ' . implode(', ', $cats);
+        }
+        if ($request->filled('item_type')) {
+            $filterParts[] = 'Type: ' . ($request->item_type == 1 ? 'Refurbished' : 'New');
+        }
+        if ($request->filled('from_date') || $request->filled('to_date')) {
+            $from = $request->from_date ?? 'Start';
+            $to = $request->to_date ?? 'End';
+            $filterParts[] = "Date: {$from} to {$to}";
+        }
+        $filterDescription = empty($filterParts) ? 'All Items' : implode(' | ', $filterParts);
+
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
 
         $data = [
             'title' => 'Inventory Items Report',
             'filter_description' => $filterDescription,
-             'new_items_count' => $newItemsCount,
-        'refurbished_items_count' => $refurbishedItemsCount,
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'new_items_count' => $newItemsCount,
+            'refurbished_items_count' => $refurbishedItemsCount,
             'report_generated_date' => now()->format('d-m-Y H:i:s'),
             'items' => $items,
             'total_items' => $totalItems,
@@ -165,24 +151,22 @@ class ReportController extends Controller
         return $pdf->download('items_report_' . now()->format('Ymd_His') . '.pdf');
     }
 
-    /**
-     * Export Assignments Report
-     */
     public function exportAssignments(Request $request)
     {
         $query = InventoryAssignment::with(['item', 'employee', 'department']);
 
-        // Filter by status
         if ($request->filled('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
-        // Filter by condition status
         if ($request->filled('condition_status') && $request->condition_status !== '') {
             $query->where('condition_status', $request->condition_status);
         }
 
-        // Filter by employee
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
         if ($request->filled('employee_ids')) {
             $employeeIds = $request->input('employee_ids');
             if (is_array($employeeIds) && !empty($employeeIds)) {
@@ -190,51 +174,14 @@ class ReportController extends Controller
             }
         }
 
-        // Filter by department
-        if ($request->filled('department_ids')) {
-            $departmentIds = $request->input('department_ids');
-            if (is_array($departmentIds) && !empty($departmentIds)) {
-                $query->whereIn('department_id', $departmentIds);
-            }
+        if ($request->filled('from_date')) {
+            $query->whereDate('assigned_date', '>=', $request->from_date);
         }
 
-        // Filter by item
-        if ($request->filled('item_ids')) {
-            $itemIds = $request->input('item_ids');
-            if (is_array($itemIds) && !empty($itemIds)) {
-                $query->whereIn('item_id', $itemIds);
-            }
+        if ($request->filled('to_date')) {
+            $query->whereDate('assigned_date', '<=', $request->to_date);
         }
 
-        // Filter by date range
-        if ($request->filled('assigned_date_from')) {
-            $query->whereDate('assigned_date', '>=', $request->assigned_date_from);
-        }
-        if ($request->filled('assigned_date_to')) {
-            $query->whereDate('assigned_date', '<=', $request->assigned_date_to);
-        }
-
-        // Filter by return date range
-        if ($request->filled('return_date_from')) {
-            $query->whereDate('return_date', '>=', $request->return_date_from);
-        }
-        if ($request->filled('return_date_to')) {
-            $query->whereDate('return_date', '<=', $request->return_date_to);
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('item', function ($sub) use ($search) {
-                    $sub->where('item_name', 'like', "%{$search}%");
-                })->orWhereHas('employee', function ($sub) use ($search) {
-                    $sub->where('fullname', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        // Sorting
         $sortBy = $request->input('sort_by', 'assigned_date');
         $sortOrder = $request->input('sort_order', 'desc');
         $allowedSortFields = ['assigned_date', 'return_date', 'status'];
@@ -247,7 +194,6 @@ class ReportController extends Controller
 
         $assignments = $query->get();
 
-        // Calculate summaries
         $totalAssignments = $assignments->count();
         $assignedCount = $assignments->where('status', 0)->count();
         $returnedCount = $assignments->where('status', 1)->count();
@@ -268,23 +214,32 @@ class ReportController extends Controller
             }
         }
 
-        $employeeSummary = [];
-        foreach ($assignments as $assignment) {
-            $empName = $assignment->employee->fullname ?? 'Unknown';
-            if (!isset($employeeSummary[$empName])) {
-                $employeeSummary[$empName] = ['total' => 0, 'assigned' => 0, 'returned' => 0];
-            }
-            $employeeSummary[$empName]['total']++;
-            if ($assignment->status == 0) {
-                $employeeSummary[$empName]['assigned']++;
-            } else {
-                $employeeSummary[$empName]['returned']++;
-            }
+        $filterParts = [];
+        if ($request->filled('status') && $request->status !== '') {
+            $filterParts[] = 'Status: ' . ($request->status == 0 ? 'Assigned' : 'Returned');
         }
+        if ($request->filled('condition_status') && $request->condition_status !== '') {
+            $filterParts[] = 'Condition: ' . ($request->condition_status == 1 ? 'Active' : 'Scrap');
+        }
+        if ($request->filled('department_id')) {
+            $dept = Department::where('dep_id', $request->department_id)->first();
+            $filterParts[] = 'Department: ' . ($dept ? $dept->dep_name : 'Unknown');
+        }
+        if ($request->filled('from_date') || $request->filled('to_date')) {
+            $from = $request->from_date ?? 'Start';
+            $to = $request->to_date ?? 'End';
+            $filterParts[] = "Date: {$from} to {$to}";
+        }
+        $filterDescription = empty($filterParts) ? 'All Assignments' : implode(' | ', $filterParts);
+
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
 
         $data = [
             'title' => 'Inventory Assignments Report',
-            'filter_description' => $this->buildAssignmentFilterDescription($request),
+            'filter_description' => $filterDescription,
+            'from_date' => $from_date,
+            'to_date' => $to_date,
             'report_generated_date' => now()->format('d-m-Y H:i:s'),
             'assignments' => $assignments,
             'total_assignments' => $totalAssignments,
@@ -293,7 +248,6 @@ class ReportController extends Controller
             'active_count' => $activeCount,
             'scrap_count' => $scrapCount,
             'department_summary' => $departmentSummary,
-            'employee_summary' => $employeeSummary,
             'company_logo' => $this->getCompanyLogo(),
             'company_name' => $this->getCompanyName(),
             'sort_by' => $sortBy,
@@ -308,60 +262,26 @@ class ReportController extends Controller
         return $pdf->download('assignments_report_' . now()->format('Ymd_His') . '.pdf');
     }
 
-    /**
-     * Export Maintenance Report
-     */
     public function exportMaintenances(Request $request)
     {
         $query = InventoryMaintenance::with(['item', 'employee']);
 
-        // Filter by maintenance type
         if ($request->filled('maintenance_type') && $request->maintenance_type !== '') {
             $query->where('maintenance_type', $request->maintenance_type);
         }
 
-        // Filter by status
         if ($request->filled('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
-        // Filter by item
-        if ($request->filled('item_ids')) {
-            $itemIds = $request->input('item_ids');
-            if (is_array($itemIds) && !empty($itemIds)) {
-                $query->whereIn('item_id', $itemIds);
-            }
+        if ($request->filled('from_date')) {
+            $query->whereDate('start_date', '>=', $request->from_date);
         }
 
-        // Filter by date range
-        if ($request->filled('start_date_from')) {
-            $query->whereDate('start_date', '>=', $request->start_date_from);
-        }
-        if ($request->filled('start_date_to')) {
-            $query->whereDate('start_date', '<=', $request->start_date_to);
+        if ($request->filled('to_date')) {
+            $query->whereDate('start_date', '<=', $request->to_date);
         }
 
-        // Filter by cost range
-        if ($request->filled('cost_min')) {
-            $query->where('cost', '>=', $request->cost_min);
-        }
-        if ($request->filled('cost_max')) {
-            $query->where('cost', '<=', $request->cost_max);
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('issue_description', 'like', "%{$search}%")
-                  ->orWhere('vendor_name', 'like', "%{$search}%")
-                  ->orWhereHas('item', function ($sub) use ($search) {
-                      $sub->where('item_name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        // Sorting
         $sortBy = $request->input('sort_by', 'start_date');
         $sortOrder = $request->input('sort_order', 'desc');
         $allowedSortFields = ['start_date', 'end_date', 'cost', 'status'];
@@ -374,7 +294,6 @@ class ReportController extends Controller
 
         $maintenances = $query->get();
 
-        // Calculate summaries
         $totalMaintenances = $maintenances->count();
         $totalCost = $maintenances->sum('cost');
 
@@ -384,10 +303,7 @@ class ReportController extends Controller
             'upgrade' => ['count' => 0, 'total_cost' => 0],
         ];
 
-        $statusSummary = [
-            'pending' => 0,
-            'complete' => 0,
-        ];
+        $statusSummary = ['pending' => 0, 'complete' => 0];
 
         foreach ($maintenances as $maintenance) {
             $type = match($maintenance->maintenance_type) {
@@ -406,9 +322,29 @@ class ReportController extends Controller
             }
         }
 
+        $filterParts = [];
+        if ($request->filled('maintenance_type') && $request->maintenance_type !== '') {
+            $types = ['Scrap', 'Service', 'Upgrade'];
+            $filterParts[] = 'Type: ' . ($types[$request->maintenance_type] ?? 'Unknown');
+        }
+        if ($request->filled('status') && $request->status !== '') {
+            $filterParts[] = 'Status: ' . ($request->status == 0 ? 'Pending' : 'Complete');
+        }
+        if ($request->filled('from_date') || $request->filled('to_date')) {
+            $from = $request->from_date ?? 'Start';
+            $to = $request->to_date ?? 'End';
+            $filterParts[] = "Date: {$from} to {$to}";
+        }
+        $filterDescription = empty($filterParts) ? 'All Maintenance Records' : implode(' | ', $filterParts);
+
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
+
         $data = [
             'title' => 'Inventory Maintenance Report',
-            'filter_description' => $this->buildMaintenanceFilterDescription($request),
+            'filter_description' => $filterDescription,
+            'from_date' => $from_date,
+            'to_date' => $to_date,
             'report_generated_date' => now()->format('d-m-Y H:i:s'),
             'maintenances' => $maintenances,
             'total_maintenances' => $totalMaintenances,
@@ -429,29 +365,25 @@ class ReportController extends Controller
         return $pdf->download('maintenance_report_' . now()->format('Ymd_His') . '.pdf');
     }
 
-    /**
-     * Export Categories Report
-     */
     public function exportCategories(Request $request)
     {
         $query = InventoryCategory::where('delete_status', 1)->with('items');
 
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('category_name', 'like', "%{$search}%");
-        }
-
-        // Filter by has items
-        if ($request->filled('has_items')) {
-            if ($request->has_items == 'yes') {
-                $query->has('items');
-            } elseif ($request->has_items == 'no') {
-                $query->doesntHave('items');
+        if ($request->filled('category_ids')) {
+            $categoryIds = $request->input('category_ids');
+            if (is_array($categoryIds) && !empty($categoryIds)) {
+                $query->whereIn('id', $categoryIds);
             }
         }
 
-        // Sorting
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
         $sortBy = $request->input('sort_by', 'category_name');
         $sortOrder = $request->input('sort_order', 'asc');
 
@@ -463,7 +395,6 @@ class ReportController extends Controller
 
         $categories = $query->get();
 
-        // Calculate summaries
         $totalCategories = $categories->count();
         $totalItems = $categories->sum(function ($cat) {
             return $cat->items->count();
@@ -472,9 +403,26 @@ class ReportController extends Controller
             return $cat->items->sum('purchase_cost');
         });
 
+        $filterParts = [];
+        if ($request->filled('category_ids')) {
+            $cats = InventoryCategory::whereIn('id', $request->category_ids)->pluck('category_name')->toArray();
+            $filterParts[] = 'Categories: ' . implode(', ', $cats);
+        }
+        if ($request->filled('from_date') || $request->filled('to_date')) {
+            $from = $request->from_date ?? 'Start';
+            $to = $request->to_date ?? 'End';
+            $filterParts[] = "Date: {$from} to {$to}";
+        }
+        $filterDescription = empty($filterParts) ? 'All Categories' : implode(' | ', $filterParts);
+
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
+
         $data = [
             'title' => 'Inventory Categories Report',
-            'filter_description' => $this->buildCategoryFilterDescription($request),
+            'filter_description' => $filterDescription,
+            'from_date' => $from_date,
+            'to_date' => $to_date,
             'report_generated_date' => now()->format('d-m-Y H:i:s'),
             'categories' => $categories,
             'total_categories' => $totalCategories,
@@ -494,7 +442,6 @@ class ReportController extends Controller
         return $pdf->download('categories_report_' . now()->format('Ymd_His') . '.pdf');
     }
 
-    // Helper methods
     private function getCompanyLogo()
     {
         $settings = \App\Models\Setting::first();
@@ -513,93 +460,5 @@ class ReportController extends Controller
     {
         $settings = \App\Models\Setting::first();
         return $settings && $settings->webname ? $settings->webname : 'RAIYAAN INFOTECH';
-    }
-
-    private function buildFilterDescription($request)
-    {
-        $parts = [];
-
-        if ($request->filled('category_ids')) {
-            $categories = InventoryCategory::whereIn('id', $request->category_ids)->pluck('category_name')->toArray();
-            $parts[] = 'Categories: ' . implode(', ', $categories);
-        }
-
-        if ($request->filled('item_type')) {
-            $parts[] = 'Item Type: ' . ($request->item_type == 1 ? 'Refurbished' : 'New');
-        }
-
-        if ($request->filled('purchase_date_from') || $request->filled('purchase_date_to')) {
-            $from = $request->purchase_date_from ?? 'Start';
-            $to = $request->purchase_date_to ?? 'End';
-            $parts[] = "Purchase Date: {$from} to {$to}";
-        }
-
-        if ($request->filled('search')) {
-            $parts[] = "Search: {$request->search}";
-        }
-
-        return empty($parts) ? 'All Items' : implode(' | ', $parts);
-    }
-
-    private function buildAssignmentFilterDescription($request)
-    {
-        $parts = [];
-
-        if ($request->filled('status') && $request->status !== '') {
-            $parts[] = 'Status: ' . ($request->status == 0 ? 'Assigned' : 'Returned');
-        }
-
-        if ($request->filled('condition_status') && $request->condition_status !== '') {
-            $parts[] = 'Condition: ' . ($request->condition_status == 1 ? 'Active' : 'Scrap');
-        }
-
-        if ($request->filled('employee_ids')) {
-            $employees = Employee::whereIn('emp_id', $request->employee_ids)->pluck('fullname')->toArray();
-            $parts[] = 'Employees: ' . implode(', ', $employees);
-        }
-
-        if ($request->filled('department_ids')) {
-            $departments = Department::whereIn('dep_id', $request->department_ids)->pluck('dep_name')->toArray();
-            $parts[] = 'Departments: ' . implode(', ', $departments);
-        }
-
-        return empty($parts) ? 'All Assignments' : implode(' | ', $parts);
-    }
-
-    private function buildMaintenanceFilterDescription($request)
-    {
-        $parts = [];
-
-        if ($request->filled('maintenance_type') && $request->maintenance_type !== '') {
-            $types = ['Scrap', 'Service', 'Upgrade'];
-            $parts[] = 'Type: ' . ($types[$request->maintenance_type] ?? 'Unknown');
-        }
-
-        if ($request->filled('status') && $request->status !== '') {
-            $parts[] = 'Status: ' . ($request->status == 0 ? 'Pending' : 'Complete');
-        }
-
-        if ($request->filled('start_date_from') || $request->filled('start_date_to')) {
-            $from = $request->start_date_from ?? 'Start';
-            $to = $request->start_date_to ?? 'End';
-            $parts[] = "Date Range: {$from} to {$to}";
-        }
-
-        return empty($parts) ? 'All Maintenance Records' : implode(' | ', $parts);
-    }
-
-    private function buildCategoryFilterDescription($request)
-    {
-        $parts = [];
-
-        if ($request->filled('search')) {
-            $parts[] = "Search: {$request->search}";
-        }
-
-        if ($request->filled('has_items')) {
-            $parts[] = $request->has_items == 'yes' ? 'With Items Only' : 'Empty Categories Only';
-        }
-
-        return empty($parts) ? 'All Categories' : implode(' | ', $parts);
     }
 }

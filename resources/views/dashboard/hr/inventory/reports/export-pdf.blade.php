@@ -49,36 +49,44 @@
             margin-bottom: 3px;
         }
 
-        /* ========== TABLE-BASED CARD LAYOUT (DOM PDF COMPATIBLE) ========== */
-       .card-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 12px;   /* controls GAP between cards */
-}
-
-.card-table td {
-    padding: 0;
-}
-
-/* make cards look like dashboard */
-.summary-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 14px;
-    border: 1px solid #e5e7eb;
-
-    /* soft shadow like UI */
-    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
-
-        .card-table td:first-child {
-            padding-left: 0;
+        .date-range-box {
+            background: #f0f7ff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #2c7da0;
+            border: 1px solid #cde5f5;
         }
 
-        .card-table td:last-child {
-            padding-right: 0;
+        .filter-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+            margin-bottom: 10px;
         }
 
+        .card-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 12px;
+        }
+
+        .card-table td {
+            padding: 0;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
 
         .summary-card h4 {
             font-size: 10px;
@@ -94,7 +102,6 @@
             font-weight: 800;
             letter-spacing: -0.5px;
         }
-
 
         .sub-summary {
             margin-bottom: 20px;
@@ -175,9 +182,6 @@
         .badge-refurbished { background-color: #17a2b8; color: white; }
         .badge-service { background-color: #3498db; color: white; }
         .badge-upgrade { background-color: #9b59b6; color: white; }
-        .badge-created { background-color: #28a745; color: white; }
-        .badge-updated { background-color: #fd7e14; color: white; }
-        .badge-deleted { background-color: #dc3545; color: white; }
 
         .text-right { text-align: right; }
         .text-center { text-align: center; }
@@ -198,84 +202,87 @@
 </head>
 <body>
 
-    <!-- Header -->
     <div class="header">
         @if($company_logo)
             <img src="{{ $company_logo }}" class="company-logo" alt="Logo">
         @endif
         <div class="company-name">{{ $company_name }}</div>
         <div class="report-title">{{ $title }}</div>
+
         <div class="report-info">Filter: {{ $filter_description }}</div>
-        <div class="report-info">Sort By: {{ ucfirst(str_replace('_', ' ', $sort_by)) }} ({{ $sort_order == 'asc' ? 'Ascending' : 'Descending' }})</div>
+
+        @php
+            $hasFromDate = isset($from_date) && $from_date;
+            $hasToDate = isset($to_date) && $to_date;
+        @endphp
+
+        @if($hasFromDate || $hasToDate)
+        <div class="filter-row">
+            @if($hasFromDate)
+            <div class="date-range-box">
+                From Date: {{ \Carbon\Carbon::parse($from_date)->format('d-m-Y') }}
+            </div>
+            @endif
+            @if($hasToDate)
+            <div class="date-range-box">
+                To Date: {{ \Carbon\Carbon::parse($to_date)->format('d-m-Y') }}
+            </div>
+            @endif
+        </div>
+        @endif
+
         <div class="report-info">Generated On: {{ $report_generated_date }}</div>
     </div>
 
     @if($report_type == 'items')
-        <!-- ==================== ITEMS REPORT ==================== -->
-
-        <!-- 5 CARDS USING TABLE (DOM PDF COMPATIBLE) -->
         <table class="card-table">
             <tr>
                 <td width="25%">
-                    <div class="summary-card card-1">
+                    <div class="summary-card">
                         <h4>Total Items</h4>
                         <div class="value">{{ $total_items }}</div>
                     </div>
                 </td>
-
-               <td width="25%">
-                    <div class="summary-card card-3">
-                        <h4>New item</h4>
-                        <div class="value">{{$new_items_count}}</div>
+                <td width="25%">
+                    <div class="summary-card">
+                        <h4>New Items</h4>
+                        <div class="value">{{ $new_items_count }}</div>
                     </div>
                 </td>
-
                 <td width="25%">
-                    <div class="summary-card card-3">
-                        <h4>Refurbished item</h4>
-                        <div class="value">{{$refurbished_items_count}}</div>
+                    <div class="summary-card">
+                        <h4>Refurbished Items</h4>
+                        <div class="value">{{ $refurbished_items_count }}</div>
                     </div>
                 </td>
-
-
                 <td width="25%">
-                    <div class="summary-card card-2">
+                    <div class="summary-card">
                         <h4>Total Quantity</h4>
                         <div class="value">{{ number_format($total_quantity) }}</div>
                     </div>
                 </td>
-
             </tr>
         </table>
 
-
         <table class="card-table">
             <tr>
-
- <td width="25%">
-                    <div class="summary-card card-3">
+                <td width="25%">
+                    <div class="summary-card">
                         <h4>Total Cost</h4>
                         <div class="value">₹ {{ number_format($total_cost, 2) }}</div>
                     </div>
                 </td>
-
-
-
                 <td width="25%">
-                    <div class="summary-card card-5">
+                    <div class="summary-card">
                         <h4>Categories</h4>
                         <div class="value">{{ count($categories_summary) }}</div>
                     </div>
                 </td>
-
-
-                 <td width="25%"></td>
-                 <td width="25%"></td>
+                <td width="25%"></td>
+                <td width="25%"></td>
             </tr>
         </table>
 
-
-        <!-- Category Summary -->
         @if(count($categories_summary) > 0)
         <div class="sub-summary">
             <h4>Summary by Category</h4>
@@ -292,7 +299,6 @@
         </div>
         @endif
 
-        <!-- Item Type Summary -->
         <div class="sub-summary">
             <h4>Summary by Item Type</h4>
             <table class="summary-table">
@@ -307,7 +313,6 @@
             </table>
         </div>
 
-        <!-- Items Details Table -->
         <div class="sub-summary">
             <h4>Item Details</h4>
             <table class="data-table">
@@ -340,45 +345,16 @@
         </div>
 
     @elseif($report_type == 'assignments')
-        <!-- ==================== ASSIGNMENTS REPORT ==================== -->
-
-        <!-- 5 CARDS USING TABLE (DOM PDF COMPATIBLE) -->
         <table class="card-table">
             <tr>
-                <td width="20%">
-                    <div class="summary-card card-1">
-                        <h4>Total Assignments</h4>
-                        <div class="value">{{ $total_assignments }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-2">
-                        <h4>Assigned</h4>
-                        <div class="value">{{ $assigned_count }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-3">
-                        <h4>Returned</h4>
-                        <div class="value">{{ $returned_count }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-4">
-                        <h4>Active Items</h4>
-                        <div class="value">{{ $active_count }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-5">
-                        <h4>Scrap Items</h4>
-                        <div class="value">{{ $scrap_count }}</div>
-                    </div>
-                </td>
+                <td width="20%"><div class="summary-card"><h4>Total Assignments</h4><div class="value">{{ $total_assignments }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Assigned</h4><div class="value">{{ $assigned_count }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Returned</h4><div class="value">{{ $returned_count }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Active Items</h4><div class="value">{{ $active_count }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Scrap Items</h4><div class="value">{{ $scrap_count }}</div></div></td>
             </tr>
         </table>
 
-        <!-- Department Summary -->
         @if(count($department_summary) > 0)
         <div class="sub-summary">
             <h4>Summary by Department</h4>
@@ -393,7 +369,6 @@
         </div>
         @endif
 
-        <!-- Assignments Details Table -->
         <div class="sub-summary">
             <h4>Assignment Details</h4>
             <table class="data-table">
@@ -420,45 +395,15 @@
         </div>
 
     @elseif($report_type == 'maintenances')
-        <!-- ==================== MAINTENANCE REPORT ==================== -->
-
-        <!-- 5 CARDS USING TABLE (DOM PDF COMPATIBLE) -->
         <table class="card-table">
             <tr>
-                <td width="20%">
-                    <div class="summary-card card-1">
-                        <h4>Total Records</h4>
-                        <div class="value">{{ $total_maintenances }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-2">
-                        <h4>Total Cost</h4>
-                        <div class="value">₹ {{ number_format($total_cost, 2) }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-3">
-                        <h4>Pending</h4>
-                        <div class="value">{{ $status_summary['pending'] }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-4">
-                        <h4>Completed</h4>
-                        <div class="value">{{ $status_summary['complete'] }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-5">
-                        <h4>Completion Rate</h4>
-                        <div class="value">{{ $total_maintenances > 0 ? round(($status_summary['complete'] / $total_maintenances) * 100, 1) : 0 }}%</div>
-                    </div>
-                </td>
+                <td width="20%"><div class="summary-card"><h4>Total Records</h4><div class="value">{{ $total_maintenances }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Total Cost</h4><div class="value">₹ {{ number_format($total_cost, 2) }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Pending</h4><div class="value">{{ $status_summary['pending'] }}</div></div></td>
+                <td width="20%"><div class="summary-card"><h4>Completed</h4><div class="value">{{ $status_summary['complete'] }}</div></div></td>
             </tr>
         </table>
 
-        <!-- Maintenance Type Summary -->
         <div class="sub-summary">
             <h4>Summary by Type</h4>
             <table class="summary-table">
@@ -473,7 +418,6 @@
             </table>
         </div>
 
-        <!-- Maintenance Details Table -->
         <div class="sub-summary">
             <h4>Maintenance Details</h4>
             <table class="data-table">
@@ -504,42 +448,15 @@
             </table>
         </div>
 
-
-
-        @elseif($report_type == 'categories')
-        <!-- ==================== CATEGORIES REPORT ==================== -->
-
-        <!-- 5 CARDS USING TABLE (DOM PDF COMPATIBLE) -->
+    @elseif($report_type == 'categories')
         <table class="card-table">
             <tr>
-                <td width="20%">
-                    <div class="summary-card card-1">
-                        <h4>Total Categories</h4>
-                        <div class="value">{{ $total_categories }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-2">
-                        <h4>Total Items</h4>
-                        <div class="value">{{ number_format($total_items) }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-                    <div class="summary-card card-3">
-                        <h4>Total Value</h4>
-                        <div class="value">₹ {{ number_format($total_cost, 2) }}</div>
-                    </div>
-                </td>
-                <td width="20%">
-
-                </td>
-                <td width="20%">
-
-                </td>
+                <td width="33%"><div class="summary-card"><h4>Total Categories</h4><div class="value">{{ $total_categories }}</div></div></td>
+                <td width="33%"><div class="summary-card"><h4>Total Items</h4><div class="value">{{ number_format($total_items) }}</div></div></td>
+                <td width="34%"><div class="summary-card"><h4>Total Value</h4><div class="value">₹ {{ number_format($total_cost, 2) }}</div></div></td>
             </tr>
         </table>
 
-        <!-- Categories Details Table -->
         <div class="sub-summary">
             <h4>Category Details</h4>
             <table class="data-table">
@@ -564,7 +481,6 @@
             </table>
         </div>
 
-        <!-- Categories with Most Items -->
         @if($categories->count() > 0)
         <div class="sub-summary">
             <h4>Top 5 Categories by Item Count</h4>
@@ -578,11 +494,7 @@
             </table>
         </div>
         @endif
-@endif
-
-
-
-
+    @endif
 
     <div class="footer">
         <p>This is a system-generated report. For any discrepancies, please contact the inventory department.</p>

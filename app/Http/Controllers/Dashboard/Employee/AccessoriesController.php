@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AccessoriesController extends Controller
 {
-    public function index(Request $request)
+  public function index(Request $request)
     {
         // Get the logged-in user's employee record
         $user = auth()->user();
@@ -27,31 +27,19 @@ class AccessoriesController extends Controller
             }
         }
 
-        // Build query with filters
-        $query = InventoryAssignment::with(['item', 'department'])
+        // ==================== ACTIVE ASSIGNMENTS ====================
+        $activeQuery = InventoryAssignment::with(['item', 'department'])
             ->where('employee_id', $employeeId)
             ->where('status', 0);
 
-        // Filter by item name
-        if ($request->filled('item')) {
-            $query->whereHas('item', function($q) use ($request) {
-                $q->where('item_name', 'like', '%' . $request->item . '%');
-            });
-        }
 
-        // Filter by item type
-        if ($request->filled('item_type')) {
-            $query->whereHas('item', function($q) use ($request) {
-                $q->where('item_type', $request->item_type);
-            });
-        }
 
-        // Pagination
+        // Pagination for active assignments only
         $perPage = $request->get('per_page', 3);
-        $assignments = $query->latest()->paginate($perPage)->withQueryString();
+        $activeAssignments = $activeQuery->latest()->paginate($perPage)->withQueryString();
 
-        // Add maintenance tracking info to paginated items
-        foreach ($assignments as $assignment) {
+        // Add maintenance tracking info to active items
+        foreach ($activeAssignments as $assignment) {
             // Check for pending maintenance
             $hasPendingMaintenance = InventoryMaintenance::where('item_id', $assignment->item_id)
                 ->where('status', 0)
@@ -69,7 +57,6 @@ class AccessoriesController extends Controller
             // Get the latest maintenance record
             $latestMaintenance = $allMaintenances->first();
             if ($latestMaintenance) {
-                // Generate tracking ID from maintenance ID (MNT-000001 format)
                 $assignment->last_tracking_id = 'MNT-' . str_pad($latestMaintenance->id, 6, '0', STR_PAD_LEFT);
                 $assignment->last_maintenance_date = $latestMaintenance->created_at;
                 $assignment->last_maintenance_status = $latestMaintenance->status;
@@ -82,18 +69,48 @@ class AccessoriesController extends Controller
             }
         }
 
-        $scrappedItems = InventoryMaintenance::where('maintenance_type', 0) // scrap
-    ->where('status', 1) // completed
-    ->where('employee_id', $employeeId)
-    ->with('item')
-    ->latest()
-    ->take(3)
-    ->get();
-      return view('dashboard.employee.accessories.index', compact(
-    'assignments',
-    'employeeId',
-    'scrappedItems'
-));
+        // ==================== RETURNED ITEMS ====================
+        $returnedItems = InventoryAssignment::with(['item', 'department'])
+            ->where('employee_id', $employeeId)
+            ->where('status', 1)
+            ->latest()
+            ->get();
+
+        // Apply client-side pagination for returned items
+        $returnedPerPage = $request->get('returned_per_page', 3);
+        if ($returnedPerPage !== 'all') {
+            $filteredReturnedItems = $returnedItems->slice(0, (int)$returnedPerPage);
+        } else {
+            $filteredReturnedItems = $returnedItems;
+        }
+
+        // ==================== SCRAPPED ITEMS ====================
+        $scrappedItems = InventoryMaintenance::where('maintenance_type', 0)
+            ->where('status', 1)
+            ->where('employee_id', $employeeId)
+            ->with('item')
+            ->latest()
+            ->get();
+
+        // Apply client-side pagination for scrapped items
+        $scrappedPerPage = $request->get('scrapped_per_page', 3);
+        if ($scrappedPerPage !== 'all') {
+            $filteredScrappedItems = $scrappedItems->slice(0, (int)$scrappedPerPage);
+        } else {
+            $filteredScrappedItems = $scrappedItems;
+        }
+
+        return view('dashboard.employee.accessories.index', compact(
+            'activeAssignments',
+            'returnedItems',
+            'filteredReturnedItems',
+            'scrappedItems',
+            'filteredScrappedItems',
+            'employeeId'
+        ) + [
+            'returnedCount' => $returnedItems->count(),
+            'scrappedCount' => $scrappedItems->count()
+        ]);
     }
 
     // Method to request maintenance from employee side
@@ -102,7 +119,7 @@ class AccessoriesController extends Controller
         $request->validate([
             'item_id' => 'required|exists:inventory_items,id',
             'issue_description' => 'required|min:5|max:500',
-             'maintenance_type' => 'required|in:0,1,2',
+            'maintenance_type' => 'required|in:0,1,2',
             'remarks' => 'nullable|max:300',
         ]);
 

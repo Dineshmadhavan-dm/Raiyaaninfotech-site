@@ -60,31 +60,6 @@ class ReportController extends Controller
             $query->where('item_type', $request->item_type);
         }
 
-        // Filter by date range
-        if ($request->filled('purchase_date_from')) {
-            $query->whereDate('purchase_date', '>=', $request->purchase_date_from);
-        }
-        if ($request->filled('purchase_date_to')) {
-            $query->whereDate('purchase_date', '<=', $request->purchase_date_to);
-        }
-
-        // Filter by cost range
-        if ($request->filled('cost_min')) {
-            $query->where('purchase_cost', '>=', $request->cost_min);
-        }
-        if ($request->filled('cost_max')) {
-            $query->where('purchase_cost', '<=', $request->cost_max);
-        }
-
-        // Search by item name/code
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('item_name', 'like', "%{$search}%")
-                  ->orWhere('item_code', 'like', "%{$search}%")
-                  ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
 
         // Sorting
         $sortBy = $request->input('sort_by', 'item_name');
@@ -109,6 +84,9 @@ class ReportController extends Controller
         $totalItems = $items->count();
         $totalCost = $items->sum('purchase_cost');
         $totalQuantity = $items->sum('quantity');
+
+          $newItemsCount = $items->where('item_type', 0)->count();
+    $refurbishedItemsCount = $items->where('item_type', 1)->count();
 
         $categoriesSummary = [];
         foreach ($items as $item) {
@@ -139,6 +117,8 @@ class ReportController extends Controller
         $data = [
             'title' => 'Inventory Items Report',
             'filter_description' => $filterDescription,
+             'new_items_count' => $newItemsCount,
+        'refurbished_items_count' => $refurbishedItemsCount,
             'report_generated_date' => now()->format('d-m-Y H:i:s'),
             'items' => $items,
             'total_items' => $totalItems,
@@ -193,41 +173,9 @@ class ReportController extends Controller
             }
         }
 
-        // Filter by item
-        if ($request->filled('item_ids')) {
-            $itemIds = $request->input('item_ids');
-            if (is_array($itemIds) && !empty($itemIds)) {
-                $query->whereIn('item_id', $itemIds);
-            }
-        }
 
-        // Filter by date range
-        if ($request->filled('assigned_date_from')) {
-            $query->whereDate('assigned_date', '>=', $request->assigned_date_from);
-        }
-        if ($request->filled('assigned_date_to')) {
-            $query->whereDate('assigned_date', '<=', $request->assigned_date_to);
-        }
 
-        // Filter by return date range
-        if ($request->filled('return_date_from')) {
-            $query->whereDate('return_date', '>=', $request->return_date_from);
-        }
-        if ($request->filled('return_date_to')) {
-            $query->whereDate('return_date', '<=', $request->return_date_to);
-        }
 
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('item', function ($sub) use ($search) {
-                    $sub->where('item_name', 'like', "%{$search}%");
-                })->orWhereHas('employee', function ($sub) use ($search) {
-                    $sub->where('fullname', 'like', "%{$search}%");
-                });
-            });
-        }
 
         // Sorting
         $sortBy = $request->input('sort_by', 'assigned_date');
@@ -320,42 +268,6 @@ class ReportController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter by item
-        if ($request->filled('item_ids')) {
-            $itemIds = $request->input('item_ids');
-            if (is_array($itemIds) && !empty($itemIds)) {
-                $query->whereIn('item_id', $itemIds);
-            }
-        }
-
-        // Filter by date range
-        if ($request->filled('start_date_from')) {
-            $query->whereDate('start_date', '>=', $request->start_date_from);
-        }
-        if ($request->filled('start_date_to')) {
-            $query->whereDate('start_date', '<=', $request->start_date_to);
-        }
-
-        // Filter by cost range
-        if ($request->filled('cost_min')) {
-            $query->where('cost', '>=', $request->cost_min);
-        }
-        if ($request->filled('cost_max')) {
-            $query->where('cost', '<=', $request->cost_max);
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('issue_description', 'like', "%{$search}%")
-                  ->orWhere('vendor_name', 'like', "%{$search}%")
-                  ->orWhereHas('item', function ($sub) use ($search) {
-                      $sub->where('item_name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
         // Sorting
         $sortBy = $request->input('sort_by', 'start_date');
         $sortOrder = $request->input('sort_order', 'desc');
@@ -431,11 +343,6 @@ class ReportController extends Controller
     {
         $query = InventoryCategory::where('delete_status', 1)->with('items');
 
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('category_name', 'like', "%{$search}%");
-        }
 
         // Filter by has items
         if ($request->filled('has_items')) {
